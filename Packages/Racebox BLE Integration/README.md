@@ -95,4 +95,4 @@ The package includes a complete UI system:
 
 ## Support
 
-For issues and feature requests, please use the project's issue tracker. 
+For issues and feature requests, please use the project's issue tracker.
