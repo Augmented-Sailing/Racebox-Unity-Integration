@@ -1,13 +1,13 @@
 {
-  "name": "com.yourcompany.racebox-ble",
+  "name": "com.augmentedcool.racebox-ble",
   "version": "1.0.0",
   "displayName": "RaceBox BLE Integration",
   "description": "A Unity package for integrating RaceBox Mini, Mini S, and Micro devices over Bluetooth Low Energy (BLE) using the Android.BLE plugin.",
   "unity": "2022.3",
   "author": {
-    "name": "Your Name",
-    "email": "your.email@example.com",
-    "url": "https://yourwebsite.com"
+    "name": "Augmented Cool",
+    "email": "sam@augmented.cool",
+    "url": "https://augmented.cool"
   },
   "keywords": [
     "RaceBox",
@@ -16,7 +16,6 @@
     "GPS",
     "Sensors"
   ],
-  "license": "MIT",
   "samples": [
     {
       "displayName": "RaceBox Example",
