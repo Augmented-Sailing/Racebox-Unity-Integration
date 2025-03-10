@@ -7,6 +7,7 @@ namespace RaceboxIntegration.Events
     /// Central event bus for the Racebox integration system.
     /// Provides a unified communication channel for system-wide events.
     /// </summary>
+    [DefaultExecutionOrder(-1000)]
     public static class MainEventBus
     {
         /// <summary>
@@ -22,12 +23,17 @@ namespace RaceboxIntegration.Events
         /// <summary>
         /// Event triggered when a device's connection status changes.
         /// </summary>
-        public static UnityEvent<string> OnDeviceStatusUpdated;
+        public static UnityEvent<string> OnDeviceRefreshed;
+
+        /// <summary>
+        /// Event triggered when a device's connection status changes.
+        /// </summary>
+        public static UnityEvent<string> OnDeviceConnectionUpdated;
 
         /// <summary>
         /// Event triggered when new data is received from a device.
         /// </summary>
-        public static UnityEvent<string> OnDeviceRefreshed;
+        public static UnityEvent<string> OnDeviceUpdated;
         
         /// <summary>
         /// Resets all events when the subsystem is registered.
@@ -35,10 +41,11 @@ namespace RaceboxIntegration.Events
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void ResetEvents ()
         {
-            OnDeviceFound = new UnityEvent<string>();
-            OnDeviceStatusUpdated = new UnityEvent<string>();
             OnBLEInitialized = new UnityEvent();
+            OnDeviceFound = new UnityEvent<string>();
             OnDeviceRefreshed = new UnityEvent<string>();
+            OnDeviceConnectionUpdated = new UnityEvent<string>();
+            OnDeviceUpdated = new UnityEvent<string>();
         }
     }
 }

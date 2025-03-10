@@ -19,6 +19,7 @@ namespace RaceboxIntegration.UI
         [SerializeField] private TMP_Text headerText;
         [SerializeField] private TMP_Text outputText;
         [SerializeField] private Button backButton;
+        [SerializeField] private Button arButton;
 
         private BluetoothDevice device;
 
@@ -26,15 +27,15 @@ namespace RaceboxIntegration.UI
         {
             backButton.onClick.RemoveAllListeners();
             backButton.onClick.AddListener(OnBack);
-            MainEventBus.OnDeviceStatusUpdated.AddListener(OnDeviceUpdated);
             MainEventBus.OnDeviceRefreshed.AddListener(OnDeviceUpdated);
+            MainEventBus.OnDeviceUpdated.AddListener(OnDeviceUpdated);
         }
 
         private void OnDisable()
         {
             backButton.onClick.RemoveListener(OnBack);
-            MainEventBus.OnDeviceStatusUpdated.RemoveListener(OnDeviceUpdated);
             MainEventBus.OnDeviceRefreshed.RemoveListener(OnDeviceUpdated);
+            MainEventBus.OnDeviceUpdated.RemoveListener(OnDeviceUpdated);
         }
 
         /// <summary>

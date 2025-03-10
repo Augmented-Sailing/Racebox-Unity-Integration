@@ -1,5 +1,11 @@
 {
   "dependencies": {
+    "com.augmentedcool.racebox-ble": {
+      "version": "file:Racebox BLE Integration",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {}
+    },
     "com.unity.burst": {
       "version": "1.8.18",
       "depth": 1,
@@ -164,7 +170,7 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.textmeshpro": {
-      "version": "3.0.7",
+      "version": "3.0.9",
       "depth": 0,
       "source": "registry",
       "dependencies": {
@@ -202,6 +208,14 @@
         "com.unity.modules.jsonserialize": "1.0.0"
       },
       "url": "https://packages.unity.com"
+    },
+    "com.unity.xr-content.xr-sim-environments": {
+      "version": "file:../ContentPackages/com.unity.xr-content.xr-sim-environments-1.0.0.tgz",
+      "depth": 0,
+      "source": "local-tarball",
+      "dependencies": {
+        "com.unity.xr.arfoundation": "5.0.0"
+      }
     },
     "com.unity.xr.arcore": {
       "version": "5.1.5",
@@ -282,7 +296,7 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.xr.management": {
-      "version": "4.4.1",
+      "version": "4.5.0",
       "depth": 0,
       "source": "registry",
       "dependencies": {
@@ -303,12 +317,6 @@
         "com.unity.modules.androidjni": "^1.0.0"
       },
       "hash": "07ca014aa67e1cb2bf34806d46bf2cf9feb1f194"
-    },
-    "com.yourcompany.racebox-ble": {
-      "version": "file:Racebox BLE Integration",
-      "depth": 0,
-      "source": "embedded",
-      "dependencies": {}
     },
     "com.unity.modules.ai": {
       "version": "1.0.0",
