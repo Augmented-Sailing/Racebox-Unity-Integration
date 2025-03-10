@@ -261,7 +261,7 @@ PlayerSettings:
   clonedFromGUID: 069202b91adc77e41923adcf0d1b815b
   templatePackageId: com.unity.template.ar-mobile@1.1.0
   templateDefaultScene: Assets/Scenes/SampleScene.unity
-  useCustomMainManifest: 0
+  useCustomMainManifest: 1
   useCustomLauncherManifest: 0
   useCustomMainGradleTemplate: 0
   useCustomLauncherGradleManifest: 0
@@ -916,7 +916,7 @@ PlayerSettings:
   hmiLogStartupTiming: 0
   hmiCpuConfiguration: 
   apiCompatibilityLevel: 6
-  activeInputHandler: 1
+  activeInputHandler: 2
   windowsGamepadBackendHint: 0
   cloudProjectId: 7981ddfb-3632-49ab-a64b-5bd0bcc4f95c
   framebufferDepthMemorylessMode: 0

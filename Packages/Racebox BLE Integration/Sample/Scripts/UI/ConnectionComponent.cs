@@ -31,7 +31,7 @@ namespace RaceboxIntegration.UI
         private void OnEnable()
         {
             MainEventBus.OnDeviceFound.AddListener(OnDeviceRefreshed);
-            MainEventBus.OnDeviceStatusUpdated.AddListener(OnDeviceRefreshed);
+            MainEventBus.OnDeviceRefreshed.AddListener(OnDeviceRefreshed);
 
             _scanButton.onClick.RemoveAllListeners();
             _scanButton.onClick.AddListener(ScanForDevices);
@@ -46,7 +46,7 @@ namespace RaceboxIntegration.UI
         private void OnDisable()
         {
             MainEventBus.OnDeviceFound.RemoveListener(OnDeviceRefreshed);
-            MainEventBus.OnDeviceStatusUpdated.AddListener(OnDeviceRefreshed);
+            MainEventBus.OnDeviceRefreshed.AddListener(OnDeviceRefreshed);
         }
 
         /// <summary>

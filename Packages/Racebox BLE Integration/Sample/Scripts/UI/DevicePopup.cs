@@ -36,12 +36,12 @@ namespace RaceboxIntegration.UI
 
         private void OnEnable()
         {
-            MainEventBus.OnDeviceStatusUpdated.AddListener(OnDeviceUpdated);
+            MainEventBus.OnDeviceRefreshed.AddListener(OnDeviceUpdated);
         }
 
         private void OnDisable()
         {
-            MainEventBus.OnDeviceStatusUpdated.RemoveListener(OnDeviceUpdated);
+            MainEventBus.OnDeviceRefreshed.RemoveListener(OnDeviceUpdated);
         }
 
         /// <summary>
