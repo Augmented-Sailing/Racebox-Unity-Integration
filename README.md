@@ -2,6 +2,10 @@
 A Unity implementation for integrating Racebox GPS/IMU devices via Bluetooth Low Energy (BLE). This package provides a complete solution for connecting to, reading data from, and displaying information from Racebox devices in Unity applications.
 
 ## Functionality
+
+https://github.com/user-attachments/assets/917ef5ba-952b-4ad9-91cb-63c09ab879e8
+
+
 - Scan for and connect to Bluetooth Devices
 - Parses Racebox specific data streams to read it's data
 
