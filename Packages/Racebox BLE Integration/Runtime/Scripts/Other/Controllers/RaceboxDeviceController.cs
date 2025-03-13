@@ -30,6 +30,7 @@ namespace RaceboxIntegration.Other
 #else
             SubscribeToPrimaryUART();
             CheckFirmware();
+            SetOptimalGNSSConfiguration(); // Add this line to configure GNSS on connection
 #endif
         }
 
@@ -104,7 +105,86 @@ namespace RaceboxIntegration.Other
                 true
             ));
         }
+        
+        public void SetGNSSConfiguration(byte platformModel, bool enable3DSpeed, byte minAccuracy)
+        {
+            // Check if the device is connected
+            if (!Device.IsConnected)
+            {
+                Debug.LogError("Cannot set GNSS configuration: Device is not connected.");
+                return;
+            }
 
+            // Construct the payload
+            byte[] payload = new byte[3];
+            payload[0] = platformModel;           // Dynamic Platform Model (e.g., 4 for Automotive)
+            payload[1] = (byte)(enable3DSpeed ? 1 : 0); // Enable 3D-Speed Reporting (0 or 1)
+            payload[2] = minAccuracy;             // Minimum Horizontal Accuracy (in 0.1m units)
+
+            // Build the UBX packet
+            byte[] packet = BuildUBXPacket(0xFF, 0x27, payload);
+
+            // Define UUIDs for the Racebox UART service
+            string uartServiceUuid = "6e400001-b5a3-f393-e0a9-e50e24dcca9e";
+            string rxCharacteristicUuid = "6e400002-b5a3-f393-e0a9-e50e24dcca9e";
+
+            // Queue the WriteToCharacteristic command with Base64-encoded data
+            BleManager.Instance.QueueCommand(new WriteToCharacteristic(
+                Device.DeviceUID,           // Device address
+                uartServiceUuid,            // Service UUID
+                rxCharacteristicUuid,       // Characteristic UUID
+                Convert.ToBase64String(packet), // Base64-encoded UBX packet
+                true                        // Use customGatt to ensure Base64 encoding
+            ));
+
+            Debug.Log("Sent GNSS configuration command.");
+        }
+        
+        /// <summary>
+        /// Sets the optimal GNSS configuration for the Racebox device (Automotive, ground speed, 1.0m accuracy).
+        /// </summary>
+        public void SetOptimalGNSSConfiguration()
+        {
+            SetGNSSConfiguration(4, false, 1); // Automotive, ground speed, 1.0m accuracy
+        }
+        
+        private byte[] BuildUBXPacket(byte classId, byte messageId, byte[] payload)
+        {
+            int payloadLength = payload != null ? payload.Length : 0;
+            byte[] packet = new byte[8 + payloadLength]; // Header (2) + Class/ID (2) + Length (2) + Payload + Checksum (2)
+
+            // Header
+            packet[0] = 0xB5; // UBX sync character 1
+            packet[1] = 0x62; // UBX sync character 2
+
+            // Class and ID
+            packet[2] = classId;   // 0xFF for Racebox-specific messages
+            packet[3] = messageId; // 0x27 for GNSS Receiver Configuration
+
+            // Length (little-endian)
+            packet[4] = (byte)(payloadLength & 0xFF);
+            packet[5] = (byte)((payloadLength >> 8) & 0xFF);
+
+            // Payload
+            if (payload != null)
+            {
+                Array.Copy(payload, 0, packet, 6, payloadLength);
+            }
+
+            // Calculate checksum (CK_A and CK_B)
+            byte ckA = 0;
+            byte ckB = 0;
+            for (int i = 2; i < 6 + payloadLength; i++)
+            {
+                ckA += packet[i];
+                ckB += ckA;
+            }
+            packet[6 + payloadLength] = ckA;
+            packet[7 + payloadLength] = ckB;
+
+            return packet;
+        }
+        
         private void OnDataReceived(byte[] value)
         {
             if (value == null)

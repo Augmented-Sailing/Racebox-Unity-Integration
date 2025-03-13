@@ -21,12 +21,12 @@ public class ARUI : MonoBehaviour
     private void OnToggleNativeGPS(bool arg0)
     {
         ARSampleManager ARManager = Provider.Instance.GetService<ARSampleManager>();
-        ARManager.ToggleNativeGPS(arg0);
+        ARManager.ToggleTrackingSource(arg0);
     }
 
     private void OnClick()
     {
         ARSampleManager ARManager = Provider.Instance.GetService<ARSampleManager>();
-        ARManager.CustomARModel.RefreshOrigin();
+        ARManager.ResetOrigin();
     }
 }

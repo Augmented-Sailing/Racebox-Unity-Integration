@@ -1526,7 +1526,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   detailsText: {fileID: 798027950}
-  _customARModel: {fileID: 771723038}
+  customARModel: {fileID: 771723038}
 --- !u!4 &1466097955
 Transform:
   m_ObjectHideFlags: 0
