@@ -19,8 +19,8 @@ namespace Proxima.Editor
 #if UNITY_2020_1_OR_NEWER
             var main = EditorGUIUtility.GetMainWindowPosition();
             var pos = window.position;
-            float w = (main.width - pos.width) * 0.5f;
-            float h = (main.height - pos.height) * 0.5f;
+            var w = (main.width - pos.width) * 0.5f;
+            var h = (main.height - pos.height) * 0.5f;
             pos.x = main.x + w;
             pos.y = main.y + h;
             window.position = pos;

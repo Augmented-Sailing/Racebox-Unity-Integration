@@ -2,9 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
-using UnityEngine;
 using UnityEditor.AssetImporters;
-
+using UnityEngine;
 #if !UNITY_2022_1_OR_NEWER
     using UnityEditor.Experimental.AssetImporters;
 #endif
@@ -28,10 +27,7 @@ namespace Proxima.Editor
             while (true)
             {
                 var sig = br.ReadInt32(); // signature
-                if (sig != 0x04034b50)
-                {
-                    break;
-                }
+                if (sig != 0x04034b50) break;
 
                 br.ReadInt16(); // version
                 br.ReadInt16(); // flags
@@ -48,7 +44,8 @@ namespace Proxima.Editor
 
                 var compressedData = br.ReadBytes(compressedSize);
                 var uncompressedData = new byte[uncompressedSize];
-                using (var deflateStream = new DeflateStream(new MemoryStream(compressedData), CompressionMode.Decompress))
+                using (var deflateStream =
+                       new DeflateStream(new MemoryStream(compressedData), CompressionMode.Decompress))
                 {
                     deflateStream.Read(uncompressedData, 0, uncompressedSize);
                 }

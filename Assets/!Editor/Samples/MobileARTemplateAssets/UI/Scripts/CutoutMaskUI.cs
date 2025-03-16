@@ -1,12 +1,12 @@
 using UnityEngine;
-using UnityEngine.UI;
 using UnityEngine.Rendering;
+using UnityEngine.UI;
 
 namespace Unity.AR.Companion.Mobile
 {
-    class CutoutMaskUI : Image
+    internal class CutoutMaskUI : Image
     {
-        static readonly int k_StencilComp = Shader.PropertyToID("_StencilComp");
+        private static readonly int k_StencilComp = Shader.PropertyToID("_StencilComp");
 
         public override Material materialForRendering
         {

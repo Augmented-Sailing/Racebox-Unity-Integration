@@ -1,6 +1,6 @@
 using System;
 using System.Collections;
-using UnityEngine;
+using Object = UnityEngine.Object;
 
 namespace Proxima
 {
@@ -38,28 +38,18 @@ namespace Proxima
 
         public static int Count(object arrayOrList)
         {
-            if (IsArray(arrayOrList))
-            {
-                return ((Array)arrayOrList).Length;
-            }
-            else if (IsList(arrayOrList))
-            {
-                return ((IList)arrayOrList).Count;
-            }
+            if (IsArray(arrayOrList)) return ((Array)arrayOrList).Length;
+
+            if (IsList(arrayOrList)) return ((IList)arrayOrList).Count;
 
             throw new ArgumentException("Type is not an array or list");
         }
 
         public static object Get(object arrayOrList, int index)
         {
-            if (IsArray(arrayOrList))
-            {
-                return ((Array)arrayOrList).GetValue(index);
-            }
-            else if (IsList(arrayOrList))
-            {
-                return ((IList)arrayOrList)[index];
-            }
+            if (IsArray(arrayOrList)) return ((Array)arrayOrList).GetValue(index);
+
+            if (IsList(arrayOrList)) return ((IList)arrayOrList)[index];
 
             throw new ArgumentException("Type is not an array or list");
         }
@@ -67,92 +57,57 @@ namespace Proxima
         public static void Set(object arrayOrList, int index, object value)
         {
             if (IsArray(arrayOrList))
-            {
                 ((Array)arrayOrList).SetValue(value, index);
-            }
             else if (IsList(arrayOrList))
-            {
                 ((IList)arrayOrList)[index] = value;
-            }
             else
-            {
                 throw new ArgumentException("Type is not an array or list");
-            }
         }
 
         public static Type GetElementType(Type arrayOrList)
         {
-            if (IsArray(arrayOrList))
-            {
-                return arrayOrList.GetElementType();
-            }
-            else if (IsList(arrayOrList))
-            {
-                return arrayOrList.GetGenericArguments()[0];
-            }
+            if (IsArray(arrayOrList)) return arrayOrList.GetElementType();
+
+            if (IsList(arrayOrList)) return arrayOrList.GetGenericArguments()[0];
 
             throw new ArgumentException("Type is not an array or list");
         }
 
         private static object CreateDefault(Type type)
         {
-            if (type.IsPrimitive)
-            {
-                return Activator.CreateInstance(type);
-            }
+            if (type.IsPrimitive) return Activator.CreateInstance(type);
 
-            if (type == typeof(string))
-            {
-                return "";
-            }
+            if (type == typeof(string)) return "";
 
-            if (type.GetConstructor(Type.EmptyTypes) != null)
-            {
-                return Activator.CreateInstance(type);
-            }
+            if (type.GetConstructor(Type.EmptyTypes) != null) return Activator.CreateInstance(type);
 
             return null;
         }
 
         private static object Duplicate(object value)
         {
-            if (value == null)
-            {
-                return null;
-            }
+            if (value == null) return null;
 
             var type = value.GetType();
-            if (type.IsValueType || type == typeof(string))
-            {
-                return value;
-            }
+            if (type.IsValueType || type == typeof(string)) return value;
 
             if (IsArray(type))
             {
                 var array = (Array)value;
                 var newArray = Array.CreateInstance(type.GetElementType(), array.Length);
-                for (var i = 0; i < array.Length; i++)
-                {
-                    newArray.SetValue(Duplicate(array.GetValue(i)), i);
-                }
+                for (var i = 0; i < array.Length; i++) newArray.SetValue(Duplicate(array.GetValue(i)), i);
             }
 
             if (IsList(type))
             {
                 var list = (IList)value;
                 var newList = (IList)Activator.CreateInstance(type);
-                foreach (var item in list)
-                {
-                    newList.Add(Duplicate(item));
-                }
+                foreach (var item in list) newList.Add(Duplicate(item));
 
                 return newList;
             }
 
-            if (type.IsSubclassOf(typeof(UnityEngine.Object)))
-            {
-                return value;
-            }
+            if (type.IsSubclassOf(typeof(Object))) return value;
 
             return null;
         }
@@ -160,10 +115,7 @@ namespace Proxima
         public static object Resize(object arrayOrList, int size)
         {
             var oldSize = Count(arrayOrList);
-            if (oldSize == size)
-            {
-                return arrayOrList;
-            }
+            if (oldSize == size) return arrayOrList;
 
             var type = arrayOrList.GetType();
             var elementType = GetElementType(type);
@@ -172,25 +124,16 @@ namespace Proxima
             {
                 var newArray = Array.CreateInstance(elementType, size);
                 Array.Copy((Array)arrayOrList, newArray, Math.Min(oldSize, size));
-                for (var i = oldSize; i < size; i++)
-                {
-                    newArray.SetValue(CreateDefault(elementType), i);
-                }
+                for (var i = oldSize; i < size; i++) newArray.SetValue(CreateDefault(elementType), i);
 
                 arrayOrList = newArray;
             }
             else if (IsList(type))
             {
-                var list = ((IList)arrayOrList);
-                while (list.Count > size)
-                {
-                    list.RemoveAt(list.Count - 1);
-                }
+                var list = (IList)arrayOrList;
+                while (list.Count > size) list.RemoveAt(list.Count - 1);
 
-                while (list.Count < size)
-                {
-                    list.Add(CreateDefault(elementType));
-                }
+                while (list.Count < size) list.Add(CreateDefault(elementType));
 
                 arrayOrList = list;
             }
@@ -204,10 +147,7 @@ namespace Proxima
             if (size > oldSize && oldSize > 0)
             {
                 var lastElement = Get(arrayOrList, oldSize - 1);
-                for (var i = oldSize; i < size; i++)
-                {
-                    Set(arrayOrList, i, Duplicate(lastElement));
-                }
+                for (var i = oldSize; i < size; i++) Set(arrayOrList, i, Duplicate(lastElement));
             }
 
             return arrayOrList;
@@ -218,19 +158,11 @@ namespace Proxima
             var temp = Get(arrayOrList, from);
 
             if (from < to)
-            {
-                for (int i = from; i < to; i++)
-                {
+                for (var i = from; i < to; i++)
                     Set(arrayOrList, i, Get(arrayOrList, i + 1));
-                }
-            }
             else
-            {
-                for (int i = from; i > to; i--)
-                {
+                for (var i = from; i > to; i--)
                     Set(arrayOrList, i, Get(arrayOrList, i - 1));
-                }
-            }
 
             Set(arrayOrList, to, temp);
         }
@@ -238,10 +170,7 @@ namespace Proxima
         public static object RemoveElement(object arrayOrList, int index)
         {
             var size = Count(arrayOrList);
-            for (int i = index; i < size - 1; i++)
-            {
-                Set(arrayOrList, i, Get(arrayOrList, i + 1));
-            }
+            for (var i = index; i < size - 1; i++) Set(arrayOrList, i, Get(arrayOrList, i + 1));
 
             return Resize(arrayOrList, size - 1);
         }

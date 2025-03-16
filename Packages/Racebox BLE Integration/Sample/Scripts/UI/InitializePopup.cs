@@ -1,4 +1,3 @@
-using System;
 using System.Collections;
 using Android.BLE;
 using RaceboxIntegration.Events;
@@ -8,8 +7,8 @@ using UnityEngine;
 namespace RaceboxIntegration.UI
 {
     /// <summary>
-    /// UI component that displays the initialization status of the BLE system.
-    /// Provides visual feedback during the BLE initialization process.
+    ///     UI component that displays the initialization status of the BLE system.
+    ///     Provides visual feedback during the BLE initialization process.
     /// </summary>
     public class InitializePopup : MonoBehaviour
     {
@@ -24,9 +23,9 @@ namespace RaceboxIntegration.UI
         {
             MainEventBus.OnBLEInitialized.RemoveListener(OnInitialized);
         }
-        
+
         /// <summary>
-        /// Displays the initialization popup and starts the auto-close sequence if already initialized.
+        ///     Displays the initialization popup and starts the auto-close sequence if already initialized.
         /// </summary>
         public void ShowPopup()
         {
@@ -41,24 +40,20 @@ namespace RaceboxIntegration.UI
         private void Refresh()
         {
             if (BleManager.IsInitialized)
-            {
                 detailText.SetText("Initialized Bluetooth");
-            }
             else
-            {
                 detailText.SetText("Initializing Bluetooth");
-            }
         }
-        
+
         /// <summary>
-        /// Automatically closes the popup after a delay.
+        ///     Automatically closes the popup after a delay.
         /// </summary>
-        IEnumerator AutomaticallyClose()
+        private IEnumerator AutomaticallyClose()
         {
             yield return new WaitForSeconds(1.5f);
             gameObject.SetActive(false);
         }
-        
+
         private void OnInitialized()
         {
             Refresh();

@@ -40,7 +40,7 @@ Shader "AR/Occlusion"
                 UNITY_VERTEX_OUTPUT_STEREO
             };
 
-            v2f vert (appdata v)
+            v2f vert(appdata v)
             {
                 v2f o;
 
@@ -52,7 +52,7 @@ Shader "AR/Occlusion"
                 return o;
             }
 
-            real4 frag (v2f i) : SV_Target
+            real4 frag(v2f i) : SV_Target
             {
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(i);
 
@@ -64,8 +64,14 @@ Shader "AR/Occlusion"
     // Built-in Render Pipeline Subshader
     SubShader
     {
-        Tags { "RenderType"="Opaque" }
-        Tags { "Queue" = "Geometry-1" }
+        Tags
+        {
+            "RenderType"="Opaque"
+        }
+        Tags
+        {
+            "Queue" = "Geometry-1"
+        }
         ZWrite On
         ZTest LEqual
         ColorMask 0
@@ -92,7 +98,7 @@ Shader "AR/Occlusion"
                 UNITY_VERTEX_OUTPUT_STEREO
             };
 
-            v2f vert (appdata v)
+            v2f vert(appdata v)
             {
                 v2f o;
 
@@ -104,7 +110,7 @@ Shader "AR/Occlusion"
                 return o;
             }
 
-            fixed4 frag (v2f i) : SV_Target
+            fixed4 frag(v2f i) : SV_Target
             {
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(i);
 

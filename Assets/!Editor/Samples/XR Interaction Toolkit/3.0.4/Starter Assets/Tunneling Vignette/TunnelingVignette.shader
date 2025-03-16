@@ -7,9 +7,12 @@ Shader "VR/TunnelingVignette"
         _VignetteColor("Vignette Color", Color) = (0, 0, 0, 1)
         _VignetteColorBlend("Vignette Color Blend", Color) = (0, 0, 0, 1)
     }
-        SubShader
+    SubShader
     {
-        Tags { "Queue" = "Transparent+5" "IgnoreProjector" = "True" "RenderType" = "Transparent" }
+        Tags
+        {
+            "Queue" = "Transparent+5" "IgnoreProjector" = "True" "RenderType" = "Transparent"
+        }
         LOD 100
 
         Pass

@@ -9,18 +9,39 @@ using UnityEngine.XR.Interaction.Toolkit.Samples.StarterAssets;
 namespace UnityEngine.XR.Interaction.Toolkit.Samples.ARStarterAssets
 {
     /// <summary>
-    /// Handles dismissing the object menu when clicking out the UI bounds, and showing the
-    /// menu again when the create menu button is clicked after dismissal. Manages object deletion in the AR demo scene,
-    /// and also handles the toggling between the object creation menu button and the delete button.
+    ///     Handles dismissing the object menu when clicking out the UI bounds, and showing the
+    ///     menu again when the create menu button is clicked after dismissal. Manages object deletion in the AR demo scene,
+    ///     and also handles the toggling between the object creation menu button and the delete button.
     /// </summary>
     public class ARSampleMenuManager : MonoBehaviour
     {
-        [SerializeField]
-        [Tooltip("Button that opens the create menu.")]
-        Button m_CreateButton;
+        [SerializeField] [Tooltip("Button that opens the create menu.")]
+        private Button m_CreateButton;
+
+        [SerializeField] [Tooltip("Button that deletes a selected object.")]
+        private Button m_DeleteButton;
+
+        [SerializeField] [Tooltip("The menu with all the creatable objects.")]
+        private GameObject m_ObjectMenu;
+
+        [SerializeField] [Tooltip("The animator for the object creation menu.")]
+        private Animator m_ObjectMenuAnimator;
+
+        [SerializeField] [Tooltip("The object spawner component in charge of spawning new objects.")]
+        private ObjectSpawner m_ObjectSpawner;
+
+        [SerializeField] [Tooltip("Button that closes the object creation menu.")]
+        private Button m_CancelButton;
+
+        [SerializeField] [Tooltip("The interaction group for the AR demo scene.")]
+        private XRInteractionGroup m_InteractionGroup;
+
+        [SerializeField] private XRInputValueReader<Vector2> m_TapStartPositionInput = new("Tap Start Position");
+
+        private bool m_ShowObjectMenu;
 
         /// <summary>
-        /// Button that opens the create menu.
+        ///     Button that opens the create menu.
         /// </summary>
         public Button createButton
         {
@@ -28,12 +49,8 @@ namespace UnityEngine.XR.Interaction.Toolkit.Samples.ARStarterAssets
             set => m_CreateButton = value;
         }
 
-        [SerializeField]
-        [Tooltip("Button that deletes a selected object.")]
-        Button m_DeleteButton;
-
         /// <summary>
-        /// Button that deletes a selected object.
+        ///     Button that deletes a selected object.
         /// </summary>
         public Button deleteButton
         {
@@ -41,12 +58,8 @@ namespace UnityEngine.XR.Interaction.Toolkit.Samples.ARStarterAssets
             set => m_DeleteButton = value;
         }
 
-        [SerializeField]
-        [Tooltip("The menu with all the creatable objects.")]
-        GameObject m_ObjectMenu;
-
         /// <summary>
-        /// The menu with all the creatable objects.
+        ///     The menu with all the creatable objects.
         /// </summary>
         public GameObject objectMenu
         {
@@ -54,12 +67,8 @@ namespace UnityEngine.XR.Interaction.Toolkit.Samples.ARStarterAssets
             set => m_ObjectMenu = value;
         }
 
-        [SerializeField]
-        [Tooltip("The animator for the object creation menu.")]
-        Animator m_ObjectMenuAnimator;
-
         /// <summary>
-        /// The animator for the object creation menu.
+        ///     The animator for the object creation menu.
         /// </summary>
         public Animator objectMenuAnimator
         {
@@ -67,12 +76,8 @@ namespace UnityEngine.XR.Interaction.Toolkit.Samples.ARStarterAssets
             set => m_ObjectMenuAnimator = value;
         }
 
-        [SerializeField]
-        [Tooltip("The object spawner component in charge of spawning new objects.")]
-        ObjectSpawner m_ObjectSpawner;
-
         /// <summary>
-        /// The object spawner component in charge of spawning new objects.
+        ///     The object spawner component in charge of spawning new objects.
         /// </summary>
         public ObjectSpawner objectSpawner
         {
@@ -80,12 +85,8 @@ namespace UnityEngine.XR.Interaction.Toolkit.Samples.ARStarterAssets
             set => m_ObjectSpawner = value;
         }
 
-        [SerializeField]
-        [Tooltip("Button that closes the object creation menu.")]
-        Button m_CancelButton;
-
         /// <summary>
-        /// Button that closes the object creation menu.
+        ///     Button that closes the object creation menu.
         /// </summary>
         public Button cancelButton
         {
@@ -93,12 +94,8 @@ namespace UnityEngine.XR.Interaction.Toolkit.Samples.ARStarterAssets
             set => m_CancelButton = value;
         }
 
-        [SerializeField]
-        [Tooltip("The interaction group for the AR demo scene.")]
-        XRInteractionGroup m_InteractionGroup;
-
         /// <summary>
-        /// The interaction group for the AR demo scene.
+        ///     The interaction group for the AR demo scene.
         /// </summary>
         public XRInteractionGroup interactionGroup
         {
@@ -106,22 +103,49 @@ namespace UnityEngine.XR.Interaction.Toolkit.Samples.ARStarterAssets
             set => m_InteractionGroup = value;
         }
 
-        [SerializeField]
-        XRInputValueReader<Vector2> m_TapStartPositionInput = new XRInputValueReader<Vector2>("Tap Start Position");
-
         /// <summary>
-        /// Input to use for the screen tap start position.
+        ///     Input to use for the screen tap start position.
         /// </summary>
-        /// <seealso cref="TouchscreenGestureInputController.tapStartPosition"/>
+        /// <seealso cref="TouchscreenGestureInputController.tapStartPosition" />
         public XRInputValueReader<Vector2> tapStartPositionInput
         {
             get => m_TapStartPositionInput;
             set => XRInputReaderUtility.SetInputProperty(ref m_TapStartPositionInput, value, this);
         }
 
-        bool m_ShowObjectMenu;
+        private void Start()
+        {
+            HideMenu();
+        }
 
-        void OnEnable()
+        private void Update()
+        {
+            if (m_ShowObjectMenu)
+            {
+                m_CreateButton.gameObject.SetActive(false);
+                m_DeleteButton.gameObject.SetActive(false);
+                var isPointerOverUI = EventSystem.current != null && EventSystem.current.IsPointerOverGameObject(-1);
+                if (!isPointerOverUI && m_TapStartPositionInput.TryReadValue(out _)) HideMenu();
+            }
+            else if (m_InteractionGroup is not null)
+            {
+                var currentFocusedObject = m_InteractionGroup.focusInteractable;
+                if (currentFocusedObject != null &&
+                    (!m_DeleteButton.isActiveAndEnabled || m_CreateButton.isActiveAndEnabled))
+                {
+                    m_CreateButton.gameObject.SetActive(false);
+                    m_DeleteButton.gameObject.SetActive(true);
+                }
+                else if (currentFocusedObject == null &&
+                         (!m_CreateButton.isActiveAndEnabled || m_DeleteButton.isActiveAndEnabled))
+                {
+                    m_CreateButton.gameObject.SetActive(true);
+                    m_DeleteButton.gameObject.SetActive(false);
+                }
+            }
+        }
+
+        private void OnEnable()
         {
             m_TapStartPositionInput.EnableDirectActionIfModeUsed();
             m_CreateButton.onClick.AddListener(ShowMenu);
@@ -129,46 +153,13 @@ namespace UnityEngine.XR.Interaction.Toolkit.Samples.ARStarterAssets
             m_DeleteButton.onClick.AddListener(DeleteFocusedObject);
         }
 
-        void OnDisable()
+        private void OnDisable()
         {
             m_TapStartPositionInput.DisableDirectActionIfModeUsed();
             m_ShowObjectMenu = false;
             m_CreateButton.onClick.RemoveListener(ShowMenu);
             m_CancelButton.onClick.RemoveListener(HideMenu);
             m_DeleteButton.onClick.RemoveListener(DeleteFocusedObject);
-        }
-
-        void Start()
-        {
-            HideMenu();
-        }
-
-        void Update()
-        {
-            if (m_ShowObjectMenu)
-            {
-                m_CreateButton.gameObject.SetActive(false);
-                m_DeleteButton.gameObject.SetActive(false);
-                var isPointerOverUI = EventSystem.current != null && EventSystem.current.IsPointerOverGameObject(-1);
-                if (!isPointerOverUI && m_TapStartPositionInput.TryReadValue(out _))
-                {
-                    HideMenu();
-                }
-            }
-            else if (m_InteractionGroup is not null)
-            {
-                var currentFocusedObject = m_InteractionGroup.focusInteractable;
-                if (currentFocusedObject != null && (!m_DeleteButton.isActiveAndEnabled || m_CreateButton.isActiveAndEnabled))
-                {
-                    m_CreateButton.gameObject.SetActive(false);
-                    m_DeleteButton.gameObject.SetActive(true);
-                }
-                else if (currentFocusedObject == null && (!m_CreateButton.isActiveAndEnabled || m_DeleteButton.isActiveAndEnabled))
-                {
-                    m_CreateButton.gameObject.SetActive(true);
-                    m_DeleteButton.gameObject.SetActive(false);
-                }
-            }
         }
 
         public void SetObjectToSpawn(int objectIndex)
@@ -180,30 +171,25 @@ namespace UnityEngine.XR.Interaction.Toolkit.Samples.ARStarterAssets
             else
             {
                 if (objectIndex < m_ObjectSpawner.objectPrefabs.Count)
-                {
                     m_ObjectSpawner.spawnOptionIndex = objectIndex;
-                }
                 else
-                {
-                    Debug.LogWarning("Object Spawner not configured correctly: object index larger than number of Object Prefabs.", this);
-                }
+                    Debug.LogWarning(
+                        "Object Spawner not configured correctly: object index larger than number of Object Prefabs.",
+                        this);
             }
 
             HideMenu();
         }
 
-        void ShowMenu()
+        private void ShowMenu()
         {
             m_ShowObjectMenu = true;
             m_ObjectMenu.SetActive(true);
-            if (!m_ObjectMenuAnimator.GetBool("Show"))
-            {
-                m_ObjectMenuAnimator.SetBool("Show", true);
-            }
+            if (!m_ObjectMenuAnimator.GetBool("Show")) m_ObjectMenuAnimator.SetBool("Show", true);
         }
 
         /// <summary>
-        /// Triggers hide animation for menu.
+        ///     Triggers hide animation for menu.
         /// </summary>
         public void HideMenu()
         {
@@ -211,16 +197,13 @@ namespace UnityEngine.XR.Interaction.Toolkit.Samples.ARStarterAssets
             m_ShowObjectMenu = false;
         }
 
-        void DeleteFocusedObject()
+        private void DeleteFocusedObject()
         {
             if (m_InteractionGroup == null)
                 return;
 
             var currentFocusedObject = m_InteractionGroup.focusInteractable;
-            if (currentFocusedObject != null)
-            {
-                Destroy(currentFocusedObject.transform.gameObject);
-            }
+            if (currentFocusedObject != null) Destroy(currentFocusedObject.transform.gameObject);
         }
     }
 }

@@ -4,7 +4,9 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Reflection;
+using System.Text;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
 namespace Proxima
 {
@@ -21,16 +23,13 @@ namespace Proxima
 
     internal class FastJson
     {
-        private static bool _pretty = false;
+        private static bool _pretty;
         private static MemoryStream _stream;
-        public static Dictionary<Type, List<FieldInfo>> _typeToObjectFields = new Dictionary<Type, List<FieldInfo>>(100);
+        public static Dictionary<Type, List<FieldInfo>> _typeToObjectFields = new(100);
 
         public static MemoryStream Serialize(object data, bool pretty = false)
         {
-            if (data == null)
-            {
-                return null;
-            }
+            if (data == null) return null;
 
             _pretty = pretty;
             _stream = new MemoryStream(1024);
@@ -50,10 +49,7 @@ namespace Proxima
 
         private static void SerializeRecursively(Type type, object data, bool quote)
         {
-            if (TrySerializeValue(type, data, quote))
-            {
-                return;
-            }
+            if (TrySerializeValue(type, data, quote)) return;
 
             if (typeof(IList).IsAssignableFrom(type))
             {
@@ -87,12 +83,12 @@ namespace Proxima
             switch (type)
             {
                 case Type t when t == typeof(bool): SerializeBool(data); break;
-                case Type t when t == typeof(byte): WriteUInt64((ulong)(byte)data); break;
-                case Type t when t == typeof(sbyte): WriteInt64((long)(sbyte)data); break;
-                case Type t when t == typeof(short): WriteInt64((long)(short)data); break;
-                case Type t when t == typeof(ushort): WriteUInt64((ulong)(ushort)data); break;
-                case Type t when t == typeof(int): WriteInt64((long)(int)data); break;
-                case Type t when t == typeof(uint): WriteUInt64((ulong)(uint)data); break;
+                case Type t when t == typeof(byte): WriteUInt64((byte)data); break;
+                case Type t when t == typeof(sbyte): WriteInt64((sbyte)data); break;
+                case Type t when t == typeof(short): WriteInt64((short)data); break;
+                case Type t when t == typeof(ushort): WriteUInt64((ushort)data); break;
+                case Type t when t == typeof(int): WriteInt64((int)data); break;
+                case Type t when t == typeof(uint): WriteUInt64((uint)data); break;
                 case Type t when t == typeof(long): WriteInt64((long)data); break;
                 case Type t when t == typeof(ulong): WriteUInt64((ulong)data); break;
                 case Type t when t == typeof(float): SerializeFloat(data); break;
@@ -111,7 +107,7 @@ namespace Proxima
                 case Type t when t == typeof(Color): SerializeColor(data, quote); break;
                 case Type t when t == typeof(LayerMask): SerializeLayerMask(data); break;
                 case Type t when t.IsEnum: SerializeEnum(data); break;
-                case Type t when t.IsSubclassOf(typeof(UnityEngine.Object)): SerializeUnityObject(type, data, quote); break;
+                case Type t when t.IsSubclassOf(typeof(Object)): SerializeUnityObject(type, data, quote); break;
                 default: return false;
             }
 
@@ -125,7 +121,7 @@ namespace Proxima
 
         private static void Write(string value, int offset, int count)
         {
-            var encoding = System.Text.Encoding.UTF8;
+            var encoding = Encoding.UTF8;
             var startLength = (int)_stream.Length;
             _stream.SetLength(_stream.Length + encoding.GetMaxByteCount(count));
             var written = encoding.GetBytes(value, offset, count, _stream.GetBuffer(), startLength);
@@ -146,13 +142,9 @@ namespace Proxima
         private static void SerializeBool(bool data)
         {
             if (data)
-            {
                 Write("true");
-            }
             else
-            {
                 Write("false");
-            }
         }
 
         private static void SerializeFloat(object data)
@@ -216,29 +208,23 @@ namespace Proxima
         private static void SerializeString(object data, bool quote)
         {
             var value = (string)data;
-            if (quote)
-            {
-                Write('"');
-            }
+            if (quote) Write('"');
 
-            if (String.IsNullOrEmpty(value))
+            if (string.IsNullOrEmpty(value))
             {
-                if (quote)
-                {
-                    Write('"');
-                }
+                if (quote) Write('"');
 
                 return;
             }
 
-            int len = value.Length;
-            bool needEncode = false;
+            var len = value.Length;
+            var needEncode = false;
             char c;
-            for (int i = 0; i < len; i++)
+            for (var i = 0; i < len; i++)
             {
                 c = value[i];
 
-                if (c >= 0 && c <= 31 || c == 34 || c == 39 || c == 60 || c == 62 || c == 92)
+                if ((c >= 0 && c <= 31) || c == 34 || c == 39 || c == 60 || c == 62 || c == 92)
                 {
                     needEncode = true;
                     break;
@@ -248,69 +234,56 @@ namespace Proxima
             if (!needEncode)
             {
                 Write(value);
-                if (quote)
-                {
-                    Write('"');
-                }
+                if (quote) Write('"');
 
                 return;
             }
 
-            int start = 0;
-            for (int i = 0; i < len; i++)
+            var start = 0;
+            for (var i = 0; i < len; i++)
             {
                 c = value[i];
                 string escaped = null;
-                if (c >= 0 && c <= 7 || c == 11 || c >= 14 && c <= 31 || c == 39 || c == 60 || c == 62)
-                {
+                if ((c >= 0 && c <= 7) || c == 11 || (c >= 14 && c <= 31) || c == 39 || c == 60 || c == 62)
                     escaped = string.Format("\\u{0:x4}", (int)c);
-                }
-                else switch ((int)c)
-                {
-                    case 8:
-                        escaped = "\\b";
-                        break;
-                    case 9:
-                        escaped = "\\t";
-                        break;
-                    case 10:
-                        escaped = "\\n";
-                        break;
-                    case 12:
-                        escaped = "\\f";
-                        break;
-                    case 13:
-                        escaped = "\\r";
-                        break;
-                    case 34:
-                        escaped = "\\\"";
-                        break;
-                    case 92:
-                        escaped = "\\\\";
-                        break;
-                }
+                else
+                    switch ((int)c)
+                    {
+                        case 8:
+                            escaped = "\\b";
+                            break;
+                        case 9:
+                            escaped = "\\t";
+                            break;
+                        case 10:
+                            escaped = "\\n";
+                            break;
+                        case 12:
+                            escaped = "\\f";
+                            break;
+                        case 13:
+                            escaped = "\\r";
+                            break;
+                        case 34:
+                            escaped = "\\\"";
+                            break;
+                        case 92:
+                            escaped = "\\\\";
+                            break;
+                    }
 
                 if (escaped != null)
                 {
-                    if (start < i)
-                    {
-                        Write(value.Substring(start, i - start));
-                    }
+                    if (start < i) Write(value.Substring(start, i - start));
 
                     Write(escaped);
                     start = i + 1;
                 }
             }
 
-            if (start < len)
-            {
-                Write(value.Substring(start));
-            }
+            if (start < len) Write(value.Substring(start));
 
-            if (quote)
-            {
-                Write('"');
-            }
+            if (quote) Write('"');
         }
 
         private static void SerializeParams<T>(params T[] values)
@@ -320,68 +293,68 @@ namespace Proxima
 
         private static void SerializeVector2(object data)
         {
-            var v = (data != null) ? (Vector2)data : Vector2.zero;
+            var v = data != null ? (Vector2)data : Vector2.zero;
             SerializeParams(v.x, v.y);
         }
 
         private static void SerializeVector3(object data)
         {
-            var v = (data != null) ? (Vector3)data : Vector3.zero;
+            var v = data != null ? (Vector3)data : Vector3.zero;
             SerializeParams(v.x, v.y, v.z);
         }
 
         private static void SerializeVector4(object data)
         {
-            var v = (data != null) ? (Vector4)data : Vector4.zero;
+            var v = data != null ? (Vector4)data : Vector4.zero;
             SerializeParams(v.x, v.y, v.z, v.w);
         }
 
         private static void SerializeVector2Int(object data)
         {
-            var v = (data != null) ? (Vector2Int)data : Vector2Int.zero;
+            var v = data != null ? (Vector2Int)data : Vector2Int.zero;
             SerializeParams(v.x, v.y);
         }
 
         private static void SerializeVector3Int(object data)
         {
-            var v = (data != null) ? (Vector3Int)data : Vector3Int.zero;
+            var v = data != null ? (Vector3Int)data : Vector3Int.zero;
             SerializeParams(v.x, v.y, v.z);
         }
 
         private static void SerializeQuaternion(object data)
         {
-            var euler = (data != null) ? ((Quaternion)data).eulerAngles : Vector3.zero;
+            var euler = data != null ? ((Quaternion)data).eulerAngles : Vector3.zero;
             SerializeVector3(euler);
         }
 
         private static void SerializeRect(object data)
         {
-            var r = (data != null) ? (Rect)data : Rect.zero;
+            var r = data != null ? (Rect)data : Rect.zero;
             SerializeParams(r.x, r.y, r.width, r.height);
         }
 
         private static void SerializeRectInt(object data)
         {
-            var r = (data != null) ? (RectInt)data : new RectInt(0, 0, 0, 0);
+            var r = data != null ? (RectInt)data : new RectInt(0, 0, 0, 0);
             SerializeParams(r.x, r.y, r.width, r.height);
         }
 
         private static void SerializeBounds(object data)
         {
-            var b = (data != null) ? (Bounds)data : new Bounds(Vector3.zero, Vector3.zero);
+            var b = data != null ? (Bounds)data : new Bounds(Vector3.zero, Vector3.zero);
             SerializeParams(b.center.x, b.center.y, b.center.z, b.size.x, b.size.y, b.size.z);
         }
 
         private static void SerializeBoundsInt(object data)
         {
-            var b = (data != null) ? (BoundsInt)data : new BoundsInt(Vector3Int.zero, Vector3Int.zero);
+            var b = data != null ? (BoundsInt)data : new BoundsInt(Vector3Int.zero, Vector3Int.zero);
             SerializeParams(b.position.x, b.position.y, b.position.z, b.size.x, b.size.y, b.size.z);
         }
 
         private static void WriteHex(byte value)
         {
-            byte high = (byte)(value >> 4);
-            byte low = (byte)(value & 15);
+            var high = (byte)(value >> 4);
+            var low = (byte)(value & 15);
             Write((char)(high < 10 ? high + 48 : high + 55));
             Write((char)(low < 10 ? low + 48 : low + 55));
         }
@@ -389,10 +362,7 @@ namespace Proxima
         private static void SerializeColor(object data, bool quote)
         {
             var color = data != null ? (Color)data : Color.black;
-            if (quote)
-            {
-                Write('"');
-            }
+            if (quote) Write('"');
 
             Write('#');
             WriteHex((byte)(color.r * 255));
@@ -400,10 +370,7 @@ namespace Proxima
             WriteHex((byte)(color.b * 255));
             WriteHex((byte)(color.a * 255));
 
-            if (quote)
-            {
-                Write('"');
-            }
+            if (quote) Write('"');
         }
 
         private static void SerializeLayerMask(object data)
@@ -437,7 +404,7 @@ namespace Proxima
 
         private static void SerializeUnityObject(Type type, object data, bool quote)
         {
-            var value = (UnityEngine.Object)data;
+            var value = (Object)data;
             if (value == null)
             {
                 Write("null");
@@ -453,19 +420,15 @@ namespace Proxima
             Write('[');
             var first = true;
             var elementType = list.GetType().GetElementType();
-            for (int i = 0; i < list.Count; i++)
+            for (var i = 0; i < list.Count; i++)
             {
                 var item = list[i];
                 if (!first)
                 {
                     if (_pretty)
-                    {
                         Write(", ");
-                    }
                     else
-                    {
                         Write(',');
-                    }
                 }
 
                 SerializeRecursively(item != null ? item.GetType() : elementType, item, true);
@@ -481,19 +444,15 @@ namespace Proxima
             Write('[');
             var first = true;
             var elementType = array.GetType().GetElementType();
-            for (int i = 0; i < array.Length; i++)
+            for (var i = 0; i < array.Length; i++)
             {
                 var item = array.GetValue(i);
                 if (!first)
                 {
                     if (_pretty)
-                    {
                         Write(", ");
-                    }
                     else
-                    {
                         Write(',');
-                    }
                 }
 
                 SerializeRecursively(item != null ? item.GetType() : elementType, item, true);
@@ -514,13 +473,9 @@ namespace Proxima
                 if (!first)
                 {
                     if (_pretty)
-                    {
                         Write(", ");
-                    }
                     else
-                    {
                         Write(',');
-                    }
                 }
 
                 SerializeRecursively(item != null ? item.GetType() : genericType, item, true);
@@ -532,10 +487,7 @@ namespace Proxima
 
         private static void SerializeObject(object data)
         {
-            if (data == null)
-            {
-                Write("null");
-            }
+            if (data == null) Write("null");
 
             var type = data.GetType();
             var json = JsonUtility.ToJson(data);
@@ -544,13 +496,9 @@ namespace Proxima
             {
                 objectFields = new List<FieldInfo>();
                 foreach (var field in type.GetFields(BindingFlags.Public | BindingFlags.Instance))
-                {
                     if ((field.FieldType == typeof(object) || field.FieldType == typeof(object[]))
                         && !Attribute.IsDefined(field, typeof(NonSerializedAttribute)))
-                    {
                         objectFields.Add(field);
-                    }
-                }
 
                 _typeToObjectFields.Add(type, objectFields);
             }
@@ -566,23 +514,16 @@ namespace Proxima
                         var serializeIf = field.GetCustomAttribute<SerializeIfAttribute>();
                         if (serializeIf != null)
                         {
-                            var conditionMethod = data.GetType().GetMethod(serializeIf.Method, BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance);
+                            var conditionMethod = data.GetType().GetMethod(serializeIf.Method,
+                                BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance);
                             if (conditionMethod == null)
-                            {
                                 throw new Exception($"Method {serializeIf.Method} not found in {data.GetType()}");
-                            }
 
                             var shouldSerialize = (bool)conditionMethod.Invoke(data, null);
-                            if (!shouldSerialize)
-                            {
-                                continue;
-                            }
+                            if (!shouldSerialize) continue;
                         }
 
-                        if (json.Length > 2)
-                        {
-                            Write(',');
-                        }
+                        if (json.Length > 2) Write(',');
 
                         Write('"');
                         Write(field.Name);
@@ -590,6 +531,7 @@ namespace Proxima
                         SerializeRecursively(value.GetType(), value, true);
                     }
                 }
+
                 Write('}');
             }
             else
@@ -600,7 +542,7 @@ namespace Proxima
 
         private static void WriteInt64(long data)
         {
-            var value = (long)data;
+            var value = data;
             if (value < 0)
             {
                 if (value == long.MinValue) // -9223372036854775808
@@ -630,7 +572,7 @@ namespace Proxima
 
             _stream.WriteByte((byte)('0' + value));
             var newLength = _stream.Length;
-            for (int i = 0; i < (newLength - start) / 2; i++)
+            for (var i = 0; i < (newLength - start) / 2; i++)
             {
                 var tmp = buf[start + i];
                 buf[start + i] = buf[newLength - i - 1];

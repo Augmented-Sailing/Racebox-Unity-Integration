@@ -7,6 +7,7 @@ public class ARUI : MonoBehaviour
 
     [SerializeField] private Button button;
     [SerializeField] private Toggle useNativeGPS;
+    [SerializeField] private ARSample arSample;
 
     private void Awake()
     {
@@ -20,13 +21,11 @@ public class ARUI : MonoBehaviour
 
     private void OnToggleNativeGPS(bool arg0)
     {
-        ARSampleManager ARManager = Provider.Instance.GetService<ARSampleManager>();
-        ARManager.ToggleTrackingSource(arg0);
+        arSample.ToggleTrackingSource(arg0);
     }
 
     private void OnClick()
     {
-        ARSampleManager ARManager = Provider.Instance.GetService<ARSampleManager>();
-        ARManager.ResetOrigin();
+        arSample.ResetOrigin();
     }
 }

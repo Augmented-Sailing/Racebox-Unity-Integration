@@ -9,82 +9,79 @@ namespace Proxima
     public class ProximaStatusUI : MonoBehaviour
     {
         // The inspector to monitor status from.
-        [SerializeField]
-        private ProximaInspector _proximaInspector;
+        [SerializeField] private ProximaInspector _proximaInspector;
+
+        // GameObject to show when Proxima is enabled.
+        [SerializeField] private GameObject _uiRoot;
+
+        // Label to show address to connect to Proxima.
+        [SerializeField] private TMP_InputField _connectInfoLabel;
+
+        // Label to show the current status and errors.
+        [SerializeField] private TMP_Text _statusLabel;
+
+        private bool _isPortrait;
+
         public ProximaInspector ProximaInspector
         {
             get => _proximaInspector;
             set => _proximaInspector = value;
         }
 
-        // GameObject to show when Proxima is enabled.
-        [SerializeField]
-        private GameObject _uiRoot;
         public GameObject UIRoot
         {
             get => _uiRoot;
             set => _uiRoot = value;
         }
 
-        // Label to show address to connect to Proxima.
-        [SerializeField]
-        private TMP_InputField _connectInfoLabel;
         public TMP_InputField ConnectInfoLabel
         {
             get => _connectInfoLabel;
             set => _connectInfoLabel = value;
         }
 
-        // Label to show the current status and errors.
-        [SerializeField]
-        private TMP_Text _statusLabel;
         public TMP_Text StatusLabel
         {
             get => _statusLabel;
             set => _statusLabel = value;
         }
 
-        private bool _isPortrait;
-
-        void Start()
+        private void Start()
         {
             _proximaInspector.Status.Changed += UpdateUI;
             UpdateUI();
         }
 
-        void OnDestroy()
+        private void Update()
         {
-            if (_proximaInspector)
+            var isPortrait = Screen.width / (float)Screen.height < 0.75f;
+            if (_isPortrait != isPortrait)
             {
-                _proximaInspector.Status.Changed -= UpdateUI;
+                _isPortrait = isPortrait;
+                UpdateUI();
             }
+        }
+
+        private void OnDestroy()
+        {
+            if (_proximaInspector) _proximaInspector.Status.Changed -= UpdateUI;
         }
 
         private void UpdateUI()
         {
-            if (_uiRoot)
-            {
-                _uiRoot.SetActive(_proximaInspector.Status.Listening);
-            }
+            if (_uiRoot) _uiRoot.SetActive(_proximaInspector.Status.Listening);
 
-            if (_connectInfoLabel)
-            {
-                _connectInfoLabel.text = _proximaInspector.Status.ConnectInfo;
-            }
+            if (_connectInfoLabel) _connectInfoLabel.text = _proximaInspector.Status.ConnectInfo;
 
             if (_statusLabel)
             {
                 if (_proximaInspector.Status.Connections > 0)
                 {
                     if (_isPortrait)
-                    {
                         _statusLabel.text = "Connected: " + _proximaInspector.Status.Connections;
-                    }
                     else
-                    {
                         _statusLabel.text = "Proxima connected to " + _proximaInspector.Status.Connections +
-                            (_proximaInspector.Status.Connections > 1 ? " clients." : " client.");
-                    }
+                                            (_proximaInspector.Status.Connections > 1 ? " clients." : " client.");
                 }
                 else if (_proximaInspector.Status.Error != null)
                 {
@@ -96,21 +93,10 @@ namespace Proxima
                 }
             }
         }
-
-        void Update()
-        {
-            bool isPortrait = (float)Screen.width / (float)Screen.height < 0.75f;
-            if (_isPortrait != isPortrait)
-            {
-                _isPortrait = isPortrait;
-                UpdateUI();
-            }
-        }
     }
 }
 
 #else
-
 namespace Proxima
 {
     public class ProximaStatusUI : UnityEngine.MonoBehaviour

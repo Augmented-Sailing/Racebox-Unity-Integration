@@ -6,24 +6,24 @@ using UnityEngine.InputSystem;
 using UnityEngine.XR.Interaction.Toolkit.Samples.StarterAssets;
 
 /// <summary>
-/// Onboarding goal to be achieved as part of the <see cref="GoalManager"/>.
+///     Onboarding goal to be achieved as part of the <see cref="GoalManager" />.
 /// </summary>
 public struct Goal
 {
     /// <summary>
-    /// Goal state this goal represents.
+    ///     Goal state this goal represents.
     /// </summary>
     public GoalManager.OnboardingGoals CurrentGoal;
 
     /// <summary>
-    /// This denotes whether a goal has been completed.
+    ///     This denotes whether a goal has been completed.
     /// </summary>
     public bool Completed;
 
     /// <summary>
-    /// Creates a new Goal with the specified <see cref="GoalManager.OnboardingGoals"/>.
+    ///     Creates a new Goal with the specified <see cref="GoalManager.OnboardingGoals" />.
     /// </summary>
-    /// <param name="goal">The <see cref="GoalManager.OnboardingGoals"/> state to assign to this Goal.</param>
+    /// <param name="goal">The <see cref="GoalManager.OnboardingGoals" /> state to assign to this Goal.</param>
     public Goal(GoalManager.OnboardingGoals goal)
     {
         CurrentGoal = goal;
@@ -32,73 +32,72 @@ public struct Goal
 }
 
 /// <summary>
-/// The GoalManager cycles through a list of Goals, each representing
-/// an <see cref="GoalManager.OnboardingGoals"/> state to be completed by the user.
+///     The GoalManager cycles through a list of Goals, each representing
+///     an <see cref="GoalManager.OnboardingGoals" /> state to be completed by the user.
 /// </summary>
 public class GoalManager : MonoBehaviour
 {
     /// <summary>
-    /// State representation for the onboarding goals for the GoalManager.
+    ///     State representation for the onboarding goals for the GoalManager.
     /// </summary>
     public enum OnboardingGoals
     {
         /// <summary>
-        /// Current empty scene
+        ///     Current empty scene
         /// </summary>
         Empty,
 
         /// <summary>
-        /// Find/scan for AR surfaces
+        ///     Find/scan for AR surfaces
         /// </summary>
         FindSurfaces,
 
         /// <summary>
-        /// Tap a surface to spawn an object
+        ///     Tap a surface to spawn an object
         /// </summary>
         TapSurface,
 
         /// <summary>
-        /// Show movement hints
+        ///     Show movement hints
         /// </summary>
         Hints,
 
         /// <summary>
-        /// Show scale and rotate hints
+        ///     Show scale and rotate hints
         /// </summary>
         Scale
     }
 
+    private const int k_NumberOfSurfacesTappedToCompleteGoal = 1;
+
+    [Tooltip("List of Goals/Steps to complete as part of the user onboarding.")] [SerializeField]
+    private List<Step> m_StepList = new();
+
+    [Tooltip("Object Spawner used to detect whether the spawning goal has been achieved.")] [SerializeField]
+    private ObjectSpawner m_ObjectSpawner;
+
+    [Tooltip("The greeting prompt Game Object to show when onboarding begins.")] [SerializeField]
+    private GameObject m_GreetingPrompt;
+
+    [Tooltip("The Options Button to enable once the greeting prompt is dismissed.")] [SerializeField]
+    private GameObject m_OptionsButton;
+
+    [Tooltip("The Create Button to enable once the greeting prompt is dismissed.")] [SerializeField]
+    private GameObject m_CreateButton;
+
+    [Tooltip("The AR Template Menu Manager object to enable once the greeting prompt is dismissed.")] [SerializeField]
+    private ARTemplateMenuManager m_MenuManager;
+
+    private bool m_AllGoalsFinished;
+    private Coroutine m_CurrentCoroutine;
+    private Goal m_CurrentGoal;
+    private int m_CurrentGoalIndex;
+
+    private Queue<Goal> m_OnboardingGoals;
+    private int m_SurfacesTapped;
+
     /// <summary>
-    /// Individual step instructions to show as part of a goal.
-    /// </summary>
-    [Serializable]
-    public class Step
-    {
-        /// <summary>
-        /// The GameObject to enable and show the user in order to complete the goal.
-        /// </summary>
-        [SerializeField]
-        public GameObject stepObject;
-
-        /// <summary>
-        /// The text to display on the button shown in the step instructions.
-        /// </summary>
-        [SerializeField]
-        public string buttonText;
-
-        /// <summary>
-        /// This indicates whether to show an additional button to skip the current goal/step.
-        /// </summary>
-        [SerializeField]
-        public bool includeSkipButton;
-    }
-
-    [Tooltip("List of Goals/Steps to complete as part of the user onboarding.")]
-    [SerializeField]
-    List<Step> m_StepList = new List<Step>();
-
-    /// <summary>
-    /// List of Goals/Steps to complete as part of the user onboarding.
+    ///     List of Goals/Steps to complete as part of the user onboarding.
     /// </summary>
     public List<Step> stepList
     {
@@ -106,12 +105,8 @@ public class GoalManager : MonoBehaviour
         set => m_StepList = value;
     }
 
-    [Tooltip("Object Spawner used to detect whether the spawning goal has been achieved.")]
-    [SerializeField]
-    ObjectSpawner m_ObjectSpawner;
-
     /// <summary>
-    /// Object Spawner used to detect whether the spawning goal has been achieved.
+    ///     Object Spawner used to detect whether the spawning goal has been achieved.
     /// </summary>
     public ObjectSpawner objectSpawner
     {
@@ -119,12 +114,8 @@ public class GoalManager : MonoBehaviour
         set => m_ObjectSpawner = value;
     }
 
-    [Tooltip("The greeting prompt Game Object to show when onboarding begins.")]
-    [SerializeField]
-    GameObject m_GreetingPrompt;
-
     /// <summary>
-    /// The greeting prompt Game Object to show when onboarding begins.
+    ///     The greeting prompt Game Object to show when onboarding begins.
     /// </summary>
     public GameObject greetingPrompt
     {
@@ -132,12 +123,8 @@ public class GoalManager : MonoBehaviour
         set => m_GreetingPrompt = value;
     }
 
-    [Tooltip("The Options Button to enable once the greeting prompt is dismissed.")]
-    [SerializeField]
-    GameObject m_OptionsButton;
-
     /// <summary>
-    /// The Options Button to enable once the greeting prompt is dismissed.
+    ///     The Options Button to enable once the greeting prompt is dismissed.
     /// </summary>
     public GameObject optionsButton
     {
@@ -145,12 +132,8 @@ public class GoalManager : MonoBehaviour
         set => m_OptionsButton = value;
     }
 
-    [Tooltip("The Create Button to enable once the greeting prompt is dismissed.")]
-    [SerializeField]
-    GameObject m_CreateButton;
-
     /// <summary>
-    /// The Create Button to enable once the greeting prompt is dismissed.
+    ///     The Create Button to enable once the greeting prompt is dismissed.
     /// </summary>
     public GameObject createButton
     {
@@ -158,12 +141,8 @@ public class GoalManager : MonoBehaviour
         set => m_CreateButton = value;
     }
 
-    [Tooltip("The AR Template Menu Manager object to enable once the greeting prompt is dismissed.")]
-    [SerializeField]
-    ARTemplateMenuManager m_MenuManager;
-
     /// <summary>
-    /// The AR Template Menu Manager object to enable once the greeting prompt is dismissed.
+    ///     The AR Template Menu Manager object to enable once the greeting prompt is dismissed.
     /// </summary>
     public ARTemplateMenuManager menuManager
     {
@@ -171,28 +150,18 @@ public class GoalManager : MonoBehaviour
         set => m_MenuManager = value;
     }
 
-    const int k_NumberOfSurfacesTappedToCompleteGoal = 1;
-
-    Queue<Goal> m_OnboardingGoals;
-    Coroutine m_CurrentCoroutine;
-    Goal m_CurrentGoal;
-    bool m_AllGoalsFinished;
-    int m_SurfacesTapped;
-    int m_CurrentGoalIndex = 0;
-
-    void Update()
+    private void Update()
     {
-        if (Pointer.current != null && Pointer.current.press.wasPressedThisFrame && !m_AllGoalsFinished && (m_CurrentGoal.CurrentGoal == OnboardingGoals.FindSurfaces || m_CurrentGoal.CurrentGoal == OnboardingGoals.Hints || m_CurrentGoal.CurrentGoal == OnboardingGoals.Scale))
+        if (Pointer.current != null && Pointer.current.press.wasPressedThisFrame && !m_AllGoalsFinished &&
+            (m_CurrentGoal.CurrentGoal == OnboardingGoals.FindSurfaces ||
+             m_CurrentGoal.CurrentGoal == OnboardingGoals.Hints || m_CurrentGoal.CurrentGoal == OnboardingGoals.Scale))
         {
-            if (m_CurrentCoroutine != null)
-            {
-                StopCoroutine(m_CurrentCoroutine);
-            }
+            if (m_CurrentCoroutine != null) StopCoroutine(m_CurrentCoroutine);
             CompleteGoal();
         }
     }
 
-    void CompleteGoal()
+    private void CompleteGoal()
     {
         if (m_CurrentGoal.CurrentGoal == OnboardingGoals.TapSurface)
             m_ObjectSpawner.objectSpawned -= OnObjectSpawned;
@@ -215,7 +184,7 @@ public class GoalManager : MonoBehaviour
         PreprocessGoal();
     }
 
-    void PreprocessGoal()
+    private void PreprocessGoal()
     {
         if (m_CurrentGoal.CurrentGoal == OnboardingGoals.FindSurfaces)
         {
@@ -237,8 +206,8 @@ public class GoalManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Tells the Goal Manager to wait for a specific number of seconds before completing
-    /// the goal and showing the next card.
+    ///     Tells the Goal Manager to wait for a specific number of seconds before completing
+    ///     the goal and showing the next card.
     /// </summary>
     /// <param name="seconds">The number of seconds to wait before showing the card.</param>
     /// <returns>Returns an IEnumerator for the current coroutine running.</returns>
@@ -254,31 +223,26 @@ public class GoalManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Forces the completion of the current goal and moves to the next.
+    ///     Forces the completion of the current goal and moves to the next.
     /// </summary>
     public void ForceCompleteGoal()
     {
         CompleteGoal();
     }
 
-    void OnObjectSpawned(GameObject spawnedObject)
+    private void OnObjectSpawned(GameObject spawnedObject)
     {
         m_SurfacesTapped++;
-        if (m_CurrentGoal.CurrentGoal == OnboardingGoals.TapSurface && m_SurfacesTapped >= k_NumberOfSurfacesTappedToCompleteGoal)
-        {
-            CompleteGoal();
-        }
+        if (m_CurrentGoal.CurrentGoal == OnboardingGoals.TapSurface &&
+            m_SurfacesTapped >= k_NumberOfSurfacesTappedToCompleteGoal) CompleteGoal();
     }
 
     /// <summary>
-    /// Triggers a restart of the onboarding/coaching process.
+    ///     Triggers a restart of the onboarding/coaching process.
     /// </summary>
     public void StartCoaching()
     {
-        if (m_OnboardingGoals != null)
-        {
-            m_OnboardingGoals.Clear();
-        }
+        if (m_OnboardingGoals != null) m_OnboardingGoals.Clear();
 
         m_OnboardingGoals = new Queue<Goal>();
 
@@ -288,7 +252,7 @@ public class GoalManager : MonoBehaviour
             m_OnboardingGoals.Enqueue(findSurfaceGoal);
         }
 
-        int startingStep = m_AllGoalsFinished ? 1 : 0;
+        var startingStep = m_AllGoalsFinished ? 1 : 0;
 
         var tapSurfaceGoal = new Goal(OnboardingGoals.TapSurface);
         var translateHintsGoal = new Goal(OnboardingGoals.Hints);
@@ -309,8 +273,7 @@ public class GoalManager : MonoBehaviour
         m_CreateButton.SetActive(true);
         m_MenuManager.enabled = true;
 
-        for (int i = startingStep; i < m_StepList.Count; i++)
-        {
+        for (var i = startingStep; i < m_StepList.Count; i++)
             if (i == startingStep)
             {
                 m_StepList[i].stepObject.SetActive(true);
@@ -320,7 +283,27 @@ public class GoalManager : MonoBehaviour
             {
                 m_StepList[i].stepObject.SetActive(false);
             }
-        }
+    }
 
+    /// <summary>
+    ///     Individual step instructions to show as part of a goal.
+    /// </summary>
+    [Serializable]
+    public class Step
+    {
+        /// <summary>
+        ///     The GameObject to enable and show the user in order to complete the goal.
+        /// </summary>
+        [SerializeField] public GameObject stepObject;
+
+        /// <summary>
+        ///     The text to display on the button shown in the step instructions.
+        /// </summary>
+        [SerializeField] public string buttonText;
+
+        /// <summary>
+        ///     This indicates whether to show an additional button to skip the current goal/step.
+        /// </summary>
+        [SerializeField] public bool includeSkipButton;
     }
 }

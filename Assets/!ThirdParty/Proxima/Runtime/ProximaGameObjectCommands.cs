@@ -8,32 +8,6 @@ namespace Proxima
 {
     internal class ProximaGameObjectCommands
     {
-        [Serializable]
-        internal class GameObjectInfo
-        {
-            public int Id;
-            public string Name;
-            public bool ActiveSelf;
-            public int Parent;
-            public int Depth;
-            public int SiblingIndex;
-            public int ChildCount;
-            public int Order;
-            public int Layer;
-            public string Tag;
-            public string Scene;
-        }
-
-        [Serializable]
-        internal class GameObjectList
-        {
-            public List<GameObjectInfo> GameObjects = new List<GameObjectInfo>();
-            public string[] Layers;
-            public List<int> Destroyed = new List<int>();
-        }
-
-        private static Dictionary<int, GameObject> _idToGameObject;
-        public static Dictionary<int, GameObject> IdToGameObject => _idToGameObject;
         private static List<GameObject> _rootGameObjects;
         private static GameObjectList _gameObjects;
         private static GameObjectList _changeList;
@@ -44,13 +18,14 @@ namespace Proxima
         private static int _lastDeleteCheckedGameObjectInfo = -1;
         private static Scene _dontDestroyOnLoadScene;
         private static HashSet<string> _pendingStreamIds;
-        private static bool _showHidden;
-        public static bool ShowHidden => _showHidden;
+        public static Dictionary<int, GameObject> IdToGameObject { get; private set; }
+
+        public static bool ShowHidden { get; private set; }
 
         [ProximaInitialize]
         public static void Init()
         {
-            _idToGameObject = new Dictionary<int, GameObject>();
+            IdToGameObject = new Dictionary<int, GameObject>();
             _rootGameObjects = new List<GameObject>();
             _gameObjects = new GameObjectList();
             _gameObjects.Layers = Enumerable.Range(0, 31).Select(index => LayerMask.LayerToName(index)).ToArray();
@@ -68,7 +43,7 @@ namespace Proxima
         [ProximaTeardown]
         public static void Teardown()
         {
-            _idToGameObject = null;
+            IdToGameObject = null;
             _rootGameObjects = null;
             _gameObjects = null;
             _changeList = null;
@@ -84,9 +59,9 @@ namespace Proxima
         [ProximaCommand("Internal")]
         public static void SetParent(int id, int parentId, int index)
         {
-            if (_idToGameObject.TryGetValue(id, out var go))
+            if (IdToGameObject.TryGetValue(id, out var go))
             {
-                _idToGameObject.TryGetValue(parentId, out var parentGo);
+                IdToGameObject.TryGetValue(parentId, out var parentGo);
                 go.transform.SetParent(parentGo?.transform, true);
                 go.transform.SetSiblingIndex(index);
             }
@@ -99,7 +74,7 @@ namespace Proxima
         [ProximaCommand("Internal")]
         public static void SetScene(int id, int sceneIndex, int index)
         {
-            if (_idToGameObject.TryGetValue(id, out var go))
+            if (IdToGameObject.TryGetValue(id, out var go))
             {
                 if (sceneIndex < SceneManager.sceneCount)
                 {
@@ -117,73 +92,52 @@ namespace Proxima
         [ProximaCommand("Internal")]
         public static void SetActive(int id, bool active)
         {
-            if (_idToGameObject.TryGetValue(id, out var go))
-            {
+            if (IdToGameObject.TryGetValue(id, out var go))
                 go.SetActive(active);
-            }
             else
-            {
                 Log.Warning($"SetActive: GameObject with id {id} not found");
-            }
         }
 
         [ProximaCommand("Internal")]
         public static void SetName(int id, string name)
         {
-            if (_idToGameObject.TryGetValue(id, out var go))
-            {
+            if (IdToGameObject.TryGetValue(id, out var go))
                 go.name = name;
-            }
             else
-            {
                 Log.Warning($"SetName: GameObject with id {id} not found");
-            }
         }
 
         [ProximaCommand("Internal")]
         public static void SetLayer(int id, int layer)
         {
-            if (_idToGameObject.TryGetValue(id, out var go))
-            {
+            if (IdToGameObject.TryGetValue(id, out var go))
                 go.layer = layer;
-            }
             else
-            {
                 Log.Warning($"SetLayer: GameObject with id {id} not found");
-            }
         }
 
         [ProximaCommand("Internal")]
         public static void SetTag(int id, string tag)
         {
-            if (_idToGameObject.TryGetValue(id, out var go))
-            {
+            if (IdToGameObject.TryGetValue(id, out var go))
                 go.tag = tag;
-            }
             else
-            {
                 Log.Warning($"SetTag: GameObject with id {id} not found");
-            }
         }
 
         [ProximaCommand("Internal")]
         public static void CreateGameObject(int parentId)
         {
             var go = new GameObject();
-            if (_idToGameObject.TryGetValue(parentId, out var parentGo))
-            {
+            if (IdToGameObject.TryGetValue(parentId, out var parentGo))
                 go.transform.SetParent(parentGo.transform, true);
-            }
         }
 
         [ProximaCommand("Internal")]
         public static void DuplicateGameObject(int id)
         {
-            if (!_idToGameObject.TryGetValue(id, out var go))
-            {
+            if (!IdToGameObject.TryGetValue(id, out var go))
                 Log.Warning($"DuplicateGameObject: GameObject with id {id} not found");
-
-            }
 
             GameObject.Instantiate(go, go.transform.parent);
         }
@@ -191,30 +145,23 @@ namespace Proxima
         [ProximaCommand("Internal")]
         public static void DestroyGameObject(int id)
         {
-            if (_idToGameObject.TryGetValue(id, out var go) && go)
-            {
+            if (IdToGameObject.TryGetValue(id, out var go) && go)
                 GameObject.Destroy(go);
-            }
             else
-            {
                 Log.Warning($"DestroyGameObject: GameObject with id {id} not found");
-            }
         }
 
         [ProximaCommand("Internal")]
         public static void AddGameObjectComponent(int id, string component)
         {
-            if (!_idToGameObject.TryGetValue(id, out var go))
+            if (!IdToGameObject.TryGetValue(id, out var go))
             {
                 Log.Warning($"AddComponent: GameObject with id {id} not found");
                 return;
             }
 
             var componentType = ProximaCommandHelpers.FindFirstComponentType(component);
-            if (componentType == null)
-            {
-                throw new Exception($"Component type {component} not found.");
-            }
+            if (componentType == null) throw new Exception($"Component type {component} not found.");
 
             go.AddComponent(componentType);
         }
@@ -222,7 +169,7 @@ namespace Proxima
         [ProximaCommand("Internal")]
         public static void SetShowHidden(bool showHidden)
         {
-            _showHidden = showHidden;
+            ShowHidden = showHidden;
         }
 
         [ProximaStreamStart("GameObjects")]
@@ -242,7 +189,7 @@ namespace Proxima
                 return _gameObjects;
             }
 
-            bool changed = _changeList.Destroyed.Count > 0 || _changeList.GameObjects.Count > 0;
+            var changed = _changeList.Destroyed.Count > 0 || _changeList.GameObjects.Count > 0;
             return changed ? _changeList : null;
         }
 
@@ -254,31 +201,20 @@ namespace Proxima
 
         public static void UpdateInfoLists()
         {
-            if (_lastUpdate == Time.frameCount)
-            {
-                return;
-            }
+            if (_lastUpdate == Time.frameCount) return;
 
             _lastUpdate = Time.frameCount;
             _changeList.GameObjects.Clear();
             _changeList.Destroyed.Clear();
 
-            if (!_lastUpdatedGameObject)
-            {
-                _lastUpdatedGameObject = null;
-            }
+            if (!_lastUpdatedGameObject) _lastUpdatedGameObject = null;
 
             var updates = 0;
-            while (updates <= ProximaInspector.MaxGameObjectUpdatesPerFrame && UpdateNextGameObjectInfo())
-            {
-                updates++;
-            }
+            while (updates <= ProximaInspector.MaxGameObjectUpdatesPerFrame && UpdateNextGameObjectInfo()) updates++;
 
             var deleteUpdates = 0;
             while (deleteUpdates <= ProximaInspector.MaxGameObjectUpdatesPerFrame && UpdateNextDeletedGameObjectInfo())
-            {
                 deleteUpdates++;
-            }
         }
 
         private static bool UpdateNextGameObjectInfo()
@@ -295,18 +231,15 @@ namespace Proxima
 
         private static bool ShouldHide(GameObject go)
         {
-            return !_showHidden && go.hideFlags.HasFlag(HideFlags.HideInHierarchy);
+            return !ShowHidden && go.hideFlags.HasFlag(HideFlags.HideInHierarchy);
         }
 
         private static GameObject GetNextChildGameObject(Transform t)
         {
-            for (int i = 0; i < t.childCount; i++)
+            for (var i = 0; i < t.childCount; i++)
             {
                 var child = t.GetChild(i);
-                if (!ShouldHide(child.gameObject))
-                {
-                    return child.gameObject;
-                }
+                if (!ShouldHide(child.gameObject)) return child.gameObject;
             }
 
             return null;
@@ -319,10 +252,7 @@ namespace Proxima
             {
                 var nextSibling = parent.GetChild(nextSiblingIndex);
                 var go = nextSibling.gameObject;
-                if (!ShouldHide(go))
-                {
-                    return go;
-                }
+                if (!ShouldHide(go)) return go;
 
                 nextSiblingIndex++;
             }
@@ -333,10 +263,7 @@ namespace Proxima
         private static GameObject GetNextRootGameObject(GameObject go)
         {
             var rootIndex = _rootGameObjects.IndexOf(go);
-            if (rootIndex >= 0)
-            {
-                return GetNextRootGameObject(rootIndex + 1);
-            }
+            if (rootIndex >= 0) return GetNextRootGameObject(rootIndex + 1);
 
             return null;
         }
@@ -346,10 +273,7 @@ namespace Proxima
             while (rootIndex < _rootGameObjects.Count)
             {
                 var nextRoot = _rootGameObjects[rootIndex];
-                if (nextRoot && !ShouldHide(nextRoot))
-                {
-                    return nextRoot;
-                }
+                if (nextRoot && !ShouldHide(nextRoot)) return nextRoot;
 
                 rootIndex++;
             }
@@ -360,18 +284,11 @@ namespace Proxima
         private static GameObject GetNextSceneGameObject(Scene? currentScene)
         {
             var nextSceneIndex = 0;
-            for (int i = 0; i < SceneManager.sceneCount; i++)
-            {
+            for (var i = 0; i < SceneManager.sceneCount; i++)
                 if (SceneManager.GetSceneAt(i) == currentScene)
-                {
                     nextSceneIndex = i + 1;
-                }
-            }
 
-            if (nextSceneIndex == 0)
-            {
-                _order = 0;
-            }
+            if (nextSceneIndex == 0) _order = 0;
 
             while (nextSceneIndex < SceneManager.sceneCount)
             {
@@ -380,10 +297,7 @@ namespace Proxima
                 {
                     nextScene.GetRootGameObjects(_rootGameObjects);
                     var nextRoot = GetNextRootGameObject(0);
-                    if (nextRoot != null)
-                    {
-                        return nextRoot;
-                    }
+                    if (nextRoot != null) return nextRoot;
                 }
 
                 nextSceneIndex++;
@@ -393,10 +307,7 @@ namespace Proxima
             {
                 _dontDestroyOnLoadScene.GetRootGameObjects(_rootGameObjects);
                 var nextRoot = GetNextRootGameObject(0);
-                if (nextRoot != null)
-                {
-                    return nextRoot;
-                }
+                if (nextRoot != null) return nextRoot;
             }
 
             return null;
@@ -404,28 +315,19 @@ namespace Proxima
 
         private static GameObject GetNextGameObject(GameObject go)
         {
-            if (go == null)
-            {
-                return GetNextSceneGameObject(null);
-            }
+            if (go == null) return GetNextSceneGameObject(null);
 
             _order++;
 
             var t = go.transform;
             var nextChild = GetNextChildGameObject(t);
-            if (nextChild != null)
-            {
-                return nextChild;
-            }
+            if (nextChild != null) return nextChild;
 
             var parent = t.parent;
             while (parent != null)
             {
                 var nextSibling = GetNextSiblingGameObject(parent, t);
-                if (nextSibling != null)
-                {
-                    return nextSibling;
-                }
+                if (nextSibling != null) return nextSibling;
 
                 t = parent;
                 parent = t.parent;
@@ -434,10 +336,7 @@ namespace Proxima
             go = t.gameObject;
             go.scene.GetRootGameObjects(_rootGameObjects);
             var nextRoot = GetNextRootGameObject(go);
-            if (nextRoot != null)
-            {
-                return nextRoot;
-            }
+            if (nextRoot != null) return nextRoot;
 
             return GetNextSceneGameObject(go.scene);
         }
@@ -453,18 +352,15 @@ namespace Proxima
             var parentId = go.transform.parent ? go.transform.parent.gameObject.GetInstanceID() : 0;
             var siblingIndex = go.transform.GetSiblingIndex();
 
-            int depth = 0;
+            var depth = 0;
             if (go.transform.parent)
-            {
                 if (_gameObjectToInfo.TryGetValue(parentId, out var parentGoi))
-                {
                     depth = parentGoi.Depth + 1;
-                }
-            }
 
             if (!_gameObjectToInfo.TryGetValue(id, out var goi))
             {
-                goi = new GameObjectInfo {
+                goi = new GameObjectInfo
+                {
                     Id = id,
                     Name = go.name,
                     ActiveSelf = go.activeSelf,
@@ -480,7 +376,7 @@ namespace Proxima
 
                 _gameObjects.GameObjects.Add(goi);
                 _gameObjectToInfo.Add(id, goi);
-                _idToGameObject.Add(id, go);
+                IdToGameObject.Add(id, go);
                 _changeList.GameObjects.Add(goi);
             }
             else
@@ -512,23 +408,44 @@ namespace Proxima
 
         private static bool UpdateNextDeletedGameObjectInfo()
         {
-            if (_gameObjects.GameObjects.Count == 0)
-            {
-                return false;
-            }
+            if (_gameObjects.GameObjects.Count == 0) return false;
 
             _lastDeleteCheckedGameObjectInfo = (_lastDeleteCheckedGameObjectInfo + 1) % _gameObjects.GameObjects.Count;
             var goi = _gameObjects.GameObjects[_lastDeleteCheckedGameObjectInfo];
-            var go = _idToGameObject[goi.Id];
+            var go = IdToGameObject[goi.Id];
             if (!go || ShouldHide(go))
             {
                 _gameObjectToInfo.Remove(goi.Id);
                 _gameObjects.GameObjects.RemoveAt(_lastDeleteCheckedGameObjectInfo);
                 _changeList.Destroyed.Add(goi.Id);
-                _idToGameObject.Remove(goi.Id);
+                IdToGameObject.Remove(goi.Id);
             }
 
             return true;
+        }
+
+        [Serializable]
+        internal class GameObjectInfo
+        {
+            public int Id;
+            public string Name;
+            public bool ActiveSelf;
+            public int Parent;
+            public int Depth;
+            public int SiblingIndex;
+            public int ChildCount;
+            public int Order;
+            public int Layer;
+            public string Tag;
+            public string Scene;
+        }
+
+        [Serializable]
+        internal class GameObjectList
+        {
+            public List<GameObjectInfo> GameObjects = new();
+            public string[] Layers;
+            public List<int> Destroyed = new();
         }
     }
 }

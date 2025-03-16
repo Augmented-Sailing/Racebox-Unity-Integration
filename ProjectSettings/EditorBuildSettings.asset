@@ -6,20 +6,14 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
-    path: Assets/Scenes/Init.unity
-    guid: ebfd670baaa1042d7b9c1db7e64dee86
+    path: Assets/Scenes/App.unity
+    guid: b760d6ef7d0bf4173a19a110f9da546f
+  - enabled: 1
+    path: Assets/Scenes/AR Sample.unity
+    guid: 6643f1a15d79049f4ba4e075b150fc0a
   - enabled: 1
     path: Packages/com.augmentedcool.racebox-ble/Sample/Scenes/GPS Sample.unity
     guid: 4755b35b590504809a7525fd2109c2e2
-  - enabled: 1
-    path: Assets/Scenes/AR Sample.unity
-    guid: 5b0b633ca59c444758e9d0f771f85d53
-  - enabled: 1
-    path: Assets/Scenes/AR Sample 2.unity
-    guid: 94531d06ebcc94c269f1659b99416be0
-  - enabled: 1
-    path: Assets/Scenes/App.unity
-    guid: b760d6ef7d0bf4173a19a110f9da546f
   - enabled: 1
     path: Assets/!Editor/Samples/XR Interaction Toolkit/3.0.4/AR Starter Assets/ARDemoScene.unity
     guid: da4db6c21a88243878fecfe160c1be3b

@@ -1,22 +1,37 @@
 using System;
 using System.Collections;
+#if UNITY_ANDROID
 using Android.BLE;
+#endif
 using Android.BLE.Commands;
+using RaceboxIntegration.Events;
+using UnityEngine;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
-using RaceboxIntegration.Events;
-using UnityEngine;
 
 namespace RaceboxIntegration.Other
 {
     [Serializable]
     public class BluetoothDevice
     {
+        private byte[] buffer = new byte[512];
+        private int bufferPos = 0;
+
+        private ConnectToDevice connectToDeviceCommand;
+
+        public BluetoothDevice(string deviceName, string deviceUid)
+        {
+            DeviceName = deviceName;
+            DeviceUID = deviceUid;
+            DeviceController = ControllerFactory.CreateController(deviceName);
+        }
+
         public string DeviceName { get; private set; }
         public string DeviceUID { get; private set; }
         public IDeviceController DeviceController { get; private set; }
         public bool IsConnecting { get; private set; }
+
         public bool IsConnected
         {
             get
@@ -28,19 +43,8 @@ namespace RaceboxIntegration.Other
 #endif
             }
         }
-        public bool IsDirty { get => connectToDeviceCommand != null; }
 
-        private ConnectToDevice connectToDeviceCommand;
-
-        private byte[] buffer = new byte[512];
-        private int bufferPos = 0;
-
-        public BluetoothDevice(string deviceName, string deviceUid)
-        {
-            DeviceName = deviceName;
-            DeviceUID = deviceUid;
-            DeviceController = ControllerFactory.CreateController(deviceName);
-        }
+        public bool IsDirty => connectToDeviceCommand != null;
 
         public string GetStatus()
         {
@@ -50,6 +54,7 @@ namespace RaceboxIntegration.Other
                     return "Disconnecting...";
                 return "Connecting...";
             }
+
             if (IsConnected)
                 return "Connected";
             if (IsDirty)
@@ -78,7 +83,8 @@ namespace RaceboxIntegration.Other
             yield return new WaitForSeconds(2);
             OnConnected(DeviceUID);
 #else
-            connectToDeviceCommand = new ConnectToDevice(DeviceUID, OnConnected, OnDisconnected, OnServiceDiscovered, OnCharacteristicDiscovered);
+            connectToDeviceCommand =
+ new ConnectToDevice(DeviceUID, OnConnected, OnDisconnected, OnServiceDiscovered, OnCharacteristicDiscovered);
             BleManager.Instance.QueueCommand(connectToDeviceCommand);
             while (IsConnecting)
                 yield return null;
@@ -127,7 +133,8 @@ namespace RaceboxIntegration.Other
 #endif
         }
 
-        private void OnCharacteristicDiscovered(string deviceaddress, string serviceaddress, string characteristicaddress)
+        private void OnCharacteristicDiscovered(string deviceaddress, string serviceaddress,
+            string characteristicaddress)
         {
             Debug.Log("Characteristic Discovered: " + characteristicaddress + " [" + deviceaddress + "]");
         }

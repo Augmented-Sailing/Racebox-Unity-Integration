@@ -1,4 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
-  <component name="Encoding" addBOMForNewFiles="with BOM under Windows, with no BOM otherwise" />
+  <component name="Encoding" addBOMForNewFiles="with BOM under Windows, with no BOM otherwise">
+    <file url="file://$PROJECT_DIR$/Assets/Scripts/Test/CameraAndCompassDirection.cs" charset="UTF-16" />
+    <file url="file://$PROJECT_DIR$/Assets/Scripts/Test/CameraGPSController3.cs" charset="US-ASCII" />
+    <file url="file://$PROJECT_DIR$/Assets/Scripts/Test/CameraGPSController4.cs" charset="US-ASCII" />
+    <file url="file://$PROJECT_DIR$/Assets/Scripts/Test/CameraGPSForward.cs" charset="UTF-16" />
+    <file url="file://$PROJECT_DIR$/Assets/Scripts/Test/CompassModeSwitcher.cs" charset="US-ASCII" />
+    <file url="file://$PROJECT_DIR$/Assets/Scripts/Test/HybridCompass.cs" charset="UTF-16" />
+  </component>
 </project>

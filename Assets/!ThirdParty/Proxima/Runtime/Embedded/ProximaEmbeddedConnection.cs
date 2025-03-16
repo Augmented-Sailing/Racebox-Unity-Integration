@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.IO;
+using System.Text;
 using ProximaWebSocketSharp;
 using ProximaWebSocketSharp.Server;
 using UnityEngine;
@@ -9,27 +10,38 @@ namespace Proxima
 {
     internal class ProximaEmbeddedConnection : WebSocketBehavior, ProximaConnection
     {
-        public bool Open => ReadyState == WebSocketState.Open;
-
-        private ConcurrentQueue<(ProximaConnection, string)> _receiveQueue;
-
-        private string _password;
-        private bool _passwordProvided = false;
+        private ProximaDispatcher _dispatcher;
         private string _displayName;
         private ProximaInstanceHello _hello;
         private DateTime _lastListTime;
         private DateTime _lastSelectTime;
-        private ProximaStatus _status;
-        private ProximaDispatcher _dispatcher;
 
-        public void Initialize(string displayName, string password, ProximaDispatcher dispatcher, ProximaStatus status, ConcurrentQueue<(ProximaConnection, string)> queue)
+        private string _password;
+        private bool _passwordProvided;
+
+        private ConcurrentQueue<(ProximaConnection, string)> _receiveQueue;
+        private ProximaStatus _status;
+        public bool Open => ReadyState == WebSocketState.Open;
+
+        public void SendMessage(MemoryStream data)
+        {
+            if (Open)
+            {
+                Log.Verbose("Sending: " + Encoding.UTF8.GetString(data.GetBuffer(), 0, (int)data.Length));
+                SendAsTextAsync(data, b => { });
+            }
+        }
+
+        public void Initialize(string displayName, string password, ProximaDispatcher dispatcher, ProximaStatus status,
+            ConcurrentQueue<(ProximaConnection, string)> queue)
         {
             _displayName = displayName;
             _receiveQueue = queue;
             _dispatcher = dispatcher;
             _status = status;
 
-            _dispatcher.Dispatch(() => {
+            _dispatcher.Dispatch(() =>
+            {
                 _hello = ProximaSerialization.CreateHello(_displayName);
                 _password = ProximaSerialization.HashPassword(password, _hello.ConnectionId);
             });
@@ -37,21 +49,10 @@ namespace Proxima
 
         protected override void OnClose(CloseEventArgs e)
         {
-            _dispatcher.Dispatch(() => {
-                if (_passwordProvided)
-                {
-                    _status.DecrementConnections();
-                }
-            });
-        }
-
-        public void SendMessage(MemoryStream data)
-        {
-            if (Open)
+            _dispatcher.Dispatch(() =>
             {
-                Log.Verbose("Sending: " + System.Text.Encoding.UTF8.GetString(data.GetBuffer(), 0, (int)data.Length));
-                SendAsTextAsync(data, (b) => {});
-            }
+                if (_passwordProvided) _status.DecrementConnections();
+            });
         }
 
         protected override void OnMessage(MessageEventArgs e)
@@ -84,8 +85,9 @@ namespace Proxima
                         return;
                     }
 
-                    _dispatcher.Dispatch(() =>{
-                        SendMessage(ProximaSerialization.DataResponse(request, new ProximaInstanceHello[] { _hello }));
+                    _dispatcher.Dispatch(() =>
+                    {
+                        SendMessage(ProximaSerialization.DataResponse(request, new[] { _hello }));
                     });
 
                     _lastListTime = DateTime.Now;

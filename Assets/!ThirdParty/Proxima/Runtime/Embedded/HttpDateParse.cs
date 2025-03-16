@@ -30,69 +30,70 @@ using System.Globalization;
 
 namespace Proxima
 {
-    internal static class HttpDateParse {
-        private const int BASE_DEC  = 10; // base 10
+    internal static class HttpDateParse
+    {
+        private const int BASE_DEC = 10; // base 10
 
         //
         // Date indicies used to figure out what each entry is.
         //
 
 
-        private const int DATE_INDEX_DAY_OF_WEEK     = 0;
+        private const int DATE_INDEX_DAY_OF_WEEK = 0;
 
-        private const int DATE_1123_INDEX_DAY        = 1;
-        private const int DATE_1123_INDEX_MONTH      = 2;
-        private const int DATE_1123_INDEX_YEAR       = 3;
-        private const int DATE_1123_INDEX_HRS        = 4;
-        private const int DATE_1123_INDEX_MINS       = 5;
-        private const int DATE_1123_INDEX_SECS       = 6;
+        private const int DATE_1123_INDEX_DAY = 1;
+        private const int DATE_1123_INDEX_MONTH = 2;
+        private const int DATE_1123_INDEX_YEAR = 3;
+        private const int DATE_1123_INDEX_HRS = 4;
+        private const int DATE_1123_INDEX_MINS = 5;
+        private const int DATE_1123_INDEX_SECS = 6;
 
-        private const int DATE_ANSI_INDEX_MONTH      = 1;
-        private const int DATE_ANSI_INDEX_DAY        = 2;
-        private const int DATE_ANSI_INDEX_HRS        = 3;
-        private const int DATE_ANSI_INDEX_MINS       = 4;
-        private const int DATE_ANSI_INDEX_SECS       = 5;
-        private const int DATE_ANSI_INDEX_YEAR       = 6;
+        private const int DATE_ANSI_INDEX_MONTH = 1;
+        private const int DATE_ANSI_INDEX_DAY = 2;
+        private const int DATE_ANSI_INDEX_HRS = 3;
+        private const int DATE_ANSI_INDEX_MINS = 4;
+        private const int DATE_ANSI_INDEX_SECS = 5;
+        private const int DATE_ANSI_INDEX_YEAR = 6;
 
-        private const int DATE_INDEX_TZ              = 7;
+        private const int DATE_INDEX_TZ = 7;
 
-        private const int DATE_INDEX_LAST            = DATE_INDEX_TZ;
-        private const int MAX_FIELD_DATE_ENTRIES           = (DATE_INDEX_LAST+1);
+        private const int DATE_INDEX_LAST = DATE_INDEX_TZ;
+        private const int MAX_FIELD_DATE_ENTRIES = DATE_INDEX_LAST + 1;
 
         //
         // DATE_TOKEN's DWORD values used to determine what day/month we're on
         //
 
-        private const int DATE_TOKEN_JANUARY      = 1;
-        private const int DATE_TOKEN_FEBRUARY     = 2;
-        private const int DATE_TOKEN_Microsoft        = 3;
-        private const int DATE_TOKEN_APRIL        = 4;
-        private const int DATE_TOKEN_MAY          = 5;
-        private const int DATE_TOKEN_JUNE         = 6;
-        private const int DATE_TOKEN_JULY         = 7;
-        private const int DATE_TOKEN_AUGUST       = 8;
-        private const int DATE_TOKEN_SEPTEMBER    = 9;
-        private const int DATE_TOKEN_OCTOBER      = 10;
-        private const int DATE_TOKEN_NOVEMBER     = 11;
-        private const int DATE_TOKEN_DECEMBER     = 12;
+        private const int DATE_TOKEN_JANUARY = 1;
+        private const int DATE_TOKEN_FEBRUARY = 2;
+        private const int DATE_TOKEN_Microsoft = 3;
+        private const int DATE_TOKEN_APRIL = 4;
+        private const int DATE_TOKEN_MAY = 5;
+        private const int DATE_TOKEN_JUNE = 6;
+        private const int DATE_TOKEN_JULY = 7;
+        private const int DATE_TOKEN_AUGUST = 8;
+        private const int DATE_TOKEN_SEPTEMBER = 9;
+        private const int DATE_TOKEN_OCTOBER = 10;
+        private const int DATE_TOKEN_NOVEMBER = 11;
+        private const int DATE_TOKEN_DECEMBER = 12;
 
-        private const int DATE_TOKEN_LAST_MONTH   = (DATE_TOKEN_DECEMBER+1);
+        private const int DATE_TOKEN_LAST_MONTH = DATE_TOKEN_DECEMBER + 1;
 
-        private const int DATE_TOKEN_SUNDAY       = 0;
-        private const int DATE_TOKEN_MONDAY       = 1;
-        private const int DATE_TOKEN_TUESDAY      = 2;
-        private const int DATE_TOKEN_WEDNESDAY    = 3;
-        private const int DATE_TOKEN_THURSDAY     = 4;
-        private const int DATE_TOKEN_FRIDAY       = 5;
-        private const int DATE_TOKEN_SATURDAY     = 6;
+        private const int DATE_TOKEN_SUNDAY = 0;
+        private const int DATE_TOKEN_MONDAY = 1;
+        private const int DATE_TOKEN_TUESDAY = 2;
+        private const int DATE_TOKEN_WEDNESDAY = 3;
+        private const int DATE_TOKEN_THURSDAY = 4;
+        private const int DATE_TOKEN_FRIDAY = 5;
+        private const int DATE_TOKEN_SATURDAY = 6;
 
-        private const int DATE_TOKEN_LAST_DAY     = (DATE_TOKEN_SATURDAY+1);
+        private const int DATE_TOKEN_LAST_DAY = DATE_TOKEN_SATURDAY + 1;
 
-        private const int DATE_TOKEN_GMT          = -1000;
+        private const int DATE_TOKEN_GMT = -1000;
 
-        private const int DATE_TOKEN_LAST         = DATE_TOKEN_GMT;
+        private const int DATE_TOKEN_LAST = DATE_TOKEN_GMT;
 
-        private const int DATE_TOKEN_ERROR        = (DATE_TOKEN_LAST+1);
+        private const int DATE_TOKEN_ERROR = DATE_TOKEN_LAST + 1;
 
 
         //
@@ -102,10 +103,11 @@ namespace Proxima
         //
 
         private
-        static
-        char
-        MAKE_UPPER(char c) {
-            return(Char.ToUpper(c, CultureInfo.InvariantCulture));
+            static
+            char
+            MAKE_UPPER(char c)
+        {
+            return char.ToUpper(c, CultureInfo.InvariantCulture);
         }
 
         /*++
@@ -130,28 +132,33 @@ namespace Proxima
         --*/
 
         private
-        static
-        int
-        MapDayMonthToDword(
-                          char [] lpszDay,
-                          int index
-                          ) {
-            switch (MAKE_UPPER(lpszDay[index])) { // make uppercase
+            static
+            int
+            MapDayMonthToDword(
+                char[] lpszDay,
+                int index
+            )
+        {
+            switch (MAKE_UPPER(lpszDay[index]))
+            {
+                // make uppercase
                 case 'A':
-                    switch (MAKE_UPPER(lpszDay[index+1])) {
+                    switch (MAKE_UPPER(lpszDay[index + 1]))
+                    {
                         case 'P':
                             return DATE_TOKEN_APRIL;
                         case 'U':
                             return DATE_TOKEN_AUGUST;
-
                     }
+
                     return DATE_TOKEN_ERROR;
 
                 case 'D':
                     return DATE_TOKEN_DECEMBER;
 
                 case 'F':
-                    switch (MAKE_UPPER(lpszDay[index+1])) {
+                    switch (MAKE_UPPER(lpszDay[index + 1]))
+                    {
                         case 'R':
                             return DATE_TOKEN_FRIDAY;
                         case 'E':
@@ -165,11 +172,13 @@ namespace Proxima
 
                 case 'M':
 
-                    switch (MAKE_UPPER(lpszDay[index+1])) {
+                    switch (MAKE_UPPER(lpszDay[index + 1]))
+                    {
                         case 'O':
                             return DATE_TOKEN_MONDAY;
                         case 'A':
-                            switch (MAKE_UPPER(lpszDay[index+2])) {
+                            switch (MAKE_UPPER(lpszDay[index + 2]))
+                            {
                                 case 'R':
                                     return DATE_TOKEN_Microsoft;
                                 case 'Y':
@@ -187,12 +196,14 @@ namespace Proxima
 
                 case 'J':
 
-                    switch (MAKE_UPPER(lpszDay[index+1])) {
+                    switch (MAKE_UPPER(lpszDay[index + 1]))
+                    {
                         case 'A':
                             return DATE_TOKEN_JANUARY;
 
                         case 'U':
-                            switch (MAKE_UPPER(lpszDay[index+2])) {
+                            switch (MAKE_UPPER(lpszDay[index + 2]))
+                            {
                                 case 'N':
                                     return DATE_TOKEN_JUNE;
                                 case 'L':
@@ -210,7 +221,8 @@ namespace Proxima
 
                 case 'S':
 
-                    switch (MAKE_UPPER(lpszDay[index+1])) {
+                    switch (MAKE_UPPER(lpszDay[index + 1]))
+                    {
                         case 'A':
                             return DATE_TOKEN_SATURDAY;
                         case 'U':
@@ -223,7 +235,8 @@ namespace Proxima
 
 
                 case 'T':
-                    switch (MAKE_UPPER(lpszDay[index+1])) {
+                    switch (MAKE_UPPER(lpszDay[index + 1]))
+                    {
                         case 'U':
                             return DATE_TOKEN_TUESDAY;
                         case 'H':
@@ -237,7 +250,6 @@ namespace Proxima
 
                 case 'W':
                     return DATE_TOKEN_WEDNESDAY;
-
             }
 
             return DATE_TOKEN_ERROR;
@@ -271,18 +283,19 @@ namespace Proxima
 
         --*/
         public
-        static
-        bool
-        ParseHttpDate(
-                     String DateString,
-                     out DateTime dtOut
-                     ) {
-            int index = 0;
+            static
+            bool
+            ParseHttpDate(
+                string DateString,
+                out DateTime dtOut
+            )
+        {
+            var index = 0;
             int i = 0, iLastLettered = -1;
-            bool fIsANSIDateFormat = false;
-            int [] rgdwDateParseResults = new int[MAX_FIELD_DATE_ENTRIES];
-            bool fRet = true;
-            char [] lpInputBuffer = DateString.ToCharArray();
+            var fIsANSIDateFormat = false;
+            var rgdwDateParseResults = new int[MAX_FIELD_DATE_ENTRIES];
+            var fRet = true;
+            var lpInputBuffer = DateString.ToCharArray();
 
             dtOut = new DateTime();
 
@@ -302,17 +315,18 @@ namespace Proxima
             //  Note: do we need to fully handle TZs anymore?
             //
 
-            while (index < DateString.Length && i < MAX_FIELD_DATE_ENTRIES) {
-                if (lpInputBuffer[index] >= '0' && lpInputBuffer[index] <= '9') {
+            while (index < DateString.Length && i < MAX_FIELD_DATE_ENTRIES)
+                if (lpInputBuffer[index] >= '0' && lpInputBuffer[index] <= '9')
+                {
                     //
                     // we have a numerical entry, scan through it and convent to DWORD
                     //
-
                     rgdwDateParseResults[i] = 0;
 
-                    do {
+                    do
+                    {
                         rgdwDateParseResults[i] *= BASE_DEC;
-                        rgdwDateParseResults[i] += (lpInputBuffer[index] - '0');
+                        rgdwDateParseResults[i] += lpInputBuffer[index] - '0';
                         index++;
                     } while (index < DateString.Length &&
                              lpInputBuffer[index] >= '0' &&
@@ -321,22 +335,23 @@ namespace Proxima
                     i++; // next token
                 }
                 else if ((lpInputBuffer[index] >= 'A' && lpInputBuffer[index] <= 'Z') ||
-                         (lpInputBuffer[index] >= 'a' && lpInputBuffer[index] <= 'z')) {
+                         (lpInputBuffer[index] >= 'a' && lpInputBuffer[index] <= 'z'))
+                {
                     //
                     // we have a string, should be a day, month, or GMT
                     //   lets skim to the end of the string
                     //
-
                     rgdwDateParseResults[i] =
-                    MapDayMonthToDword(lpInputBuffer, index);
+                        MapDayMonthToDword(lpInputBuffer, index);
 
                     iLastLettered = i;
 
                     // We want to ignore the possibility of a time zone such as PST or EST in a non-standard
                     // date format such as "Thu Dec 17 16:01:28 PST 1998" (Notice that the year is _after_ the time zone
-                    if ((rgdwDateParseResults[i] == DATE_TOKEN_ERROR)
+                    if (rgdwDateParseResults[i] == DATE_TOKEN_ERROR
                         &&
-                        !(fIsANSIDateFormat && (i==DATE_ANSI_INDEX_YEAR))) {
+                        !(fIsANSIDateFormat && i == DATE_ANSI_INDEX_YEAR))
+                    {
                         fRet = false;
                         goto quit;
                     }
@@ -346,25 +361,23 @@ namespace Proxima
                     //  at this index, we know for sure that we're
                     //  looking at a ANSI type DATE format.
                     //
-
-                    if (i == DATE_ANSI_INDEX_MONTH) {
-                        fIsANSIDateFormat = true;
-                    }
+                    if (i == DATE_ANSI_INDEX_MONTH) fIsANSIDateFormat = true;
 
                     //
                     // Read past the end of the current set of alpha characters,
                     //  as MapDayMonthToDword only peeks at a few characters
                     //
-
-                    do {
+                    do
+                    {
                         index++;
                     } while (index < DateString.Length &&
-                             ( (lpInputBuffer[index] >= 'A' && lpInputBuffer[index] <= 'Z') ||
-                               (lpInputBuffer[index] >= 'a' && lpInputBuffer[index] <= 'z') ));
+                             ((lpInputBuffer[index] >= 'A' && lpInputBuffer[index] <= 'Z') ||
+                              (lpInputBuffer[index] >= 'a' && lpInputBuffer[index] <= 'z')));
 
                     i++; // next token
                 }
-                else {
+                else
+                {
                     //
                     // For the generic case its either a space, comma, semi-colon, etc.
                     //  the point is we really don't care, nor do we need to waste time
@@ -372,10 +385,8 @@ namespace Proxima
                     //  care about the actual date information, So we just advance to the
                     //  next lexume.
                     //
-
                     index++;
                 }
-            }
 
             //
             // We're finished parsing the string, now take the parsed tokens
@@ -391,28 +402,28 @@ namespace Proxima
             int second;
             int millisecond;
 
-            millisecond =  0;
+            millisecond = 0;
 
-            if (fIsANSIDateFormat) {
-                day    = rgdwDateParseResults[DATE_ANSI_INDEX_DAY];
-                month  = rgdwDateParseResults[DATE_ANSI_INDEX_MONTH];
-                hour   = rgdwDateParseResults[DATE_ANSI_INDEX_HRS];
+            if (fIsANSIDateFormat)
+            {
+                day = rgdwDateParseResults[DATE_ANSI_INDEX_DAY];
+                month = rgdwDateParseResults[DATE_ANSI_INDEX_MONTH];
+                hour = rgdwDateParseResults[DATE_ANSI_INDEX_HRS];
                 minute = rgdwDateParseResults[DATE_ANSI_INDEX_MINS];
                 second = rgdwDateParseResults[DATE_ANSI_INDEX_SECS];
-                if (iLastLettered != DATE_ANSI_INDEX_YEAR) {
-                    year   = rgdwDateParseResults[DATE_ANSI_INDEX_YEAR];
-                }
-                else {
+                if (iLastLettered != DATE_ANSI_INDEX_YEAR)
+                    year = rgdwDateParseResults[DATE_ANSI_INDEX_YEAR];
+                else
                     // This is a fix to get around toString/toGMTstring (where the timezone is
                     // appended at the end. (See above)
-                    year   = rgdwDateParseResults[DATE_INDEX_TZ];
-                }
+                    year = rgdwDateParseResults[DATE_INDEX_TZ];
             }
-            else {
-                day    = rgdwDateParseResults[DATE_1123_INDEX_DAY];
-                month  = rgdwDateParseResults[DATE_1123_INDEX_MONTH];
-                year   = rgdwDateParseResults[DATE_1123_INDEX_YEAR];
-                hour   = rgdwDateParseResults[DATE_1123_INDEX_HRS];
+            else
+            {
+                day = rgdwDateParseResults[DATE_1123_INDEX_DAY];
+                month = rgdwDateParseResults[DATE_1123_INDEX_MONTH];
+                year = rgdwDateParseResults[DATE_1123_INDEX_YEAR];
+                hour = rgdwDateParseResults[DATE_1123_INDEX_HRS];
                 minute = rgdwDateParseResults[DATE_1123_INDEX_MINS];
                 second = rgdwDateParseResults[DATE_1123_INDEX_SECS];
             }
@@ -423,20 +434,19 @@ namespace Proxima
             //  we all look bad.
             //
 
-            if (year < 100) {
-                year += ((year < 80) ? 2000 : 1900);
-            }
+            if (year < 100) year += year < 80 ? 2000 : 1900;
 
             //
             // if we got misformed time, then plug in the current time
             // !lpszHrs || !lpszMins || !lpszSec
             //
 
-            if ((i < 4)
-                || (day > 31)
-                || (hour > 23)
-                || (minute > 59)
-                || (second > 59)) {
+            if (i < 4
+                || day > 31
+                || hour > 23
+                || minute > 59
+                || second > 59)
+            {
                 fRet = false;
                 goto quit;
             }
@@ -445,33 +455,32 @@ namespace Proxima
             // Now do the DateTime conversion
             //
 
-            dtOut = new DateTime (year, month, day, hour, minute, second, millisecond);
+            dtOut = new DateTime(year, month, day, hour, minute, second, millisecond);
 
             //
             // we want the system time to be accurate. This is _suhlow_
             // The time passed in is in the local time zone; we have to convert this into GMT.
             //
 
-            if (iLastLettered==DATE_ANSI_INDEX_YEAR) {
+            if (iLastLettered == DATE_ANSI_INDEX_YEAR)
                 // this should be an unusual case.
                 dtOut = dtOut.ToUniversalTime();
-            }
 
             //
             // If we have an Offset to another Time Zone
             //   then convert to appropriate GMT time
             //
 
-            if ((i > DATE_INDEX_TZ &&
-                 rgdwDateParseResults[DATE_INDEX_TZ] != DATE_TOKEN_GMT)) {
-
+            if (i > DATE_INDEX_TZ &&
+                rgdwDateParseResults[DATE_INDEX_TZ] != DATE_TOKEN_GMT)
+            {
                 //
                 // if we received +/-nnnn as offset (hhmm), modify the output FILETIME
                 //
 
                 double offset;
 
-                offset = (double) rgdwDateParseResults[DATE_INDEX_TZ];
+                offset = rgdwDateParseResults[DATE_INDEX_TZ];
                 dtOut.AddHours(offset);
             }
 

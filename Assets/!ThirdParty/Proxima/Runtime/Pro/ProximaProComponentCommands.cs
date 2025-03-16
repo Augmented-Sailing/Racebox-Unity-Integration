@@ -16,7 +16,8 @@ namespace Proxima
         public static void CreateComponentButtons(Component component, ProximaComponentCommands.ComponentInfo ci)
         {
             var type = component.GetType();
-            foreach (var method in type.GetMethods(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic))
+            foreach (var method in
+                     type.GetMethods(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic))
             {
                 var buttonAttribute = method.GetCustomAttribute<ProximaButtonAttribute>();
                 if (buttonAttribute != null)
@@ -33,7 +34,8 @@ namespace Proxima
             }
         }
 
-        private static bool TryGetPropertyChain(int componentId, string name, out Component component, out Stack<ProximaComponentCommands.PropertyInfo> propertyChain)
+        private static bool TryGetPropertyChain(int componentId, string name, out Component component,
+            out Stack<ProximaComponentCommands.PropertyInfo> propertyChain)
         {
             if (!ProximaComponentCommands.IdToComponentInfo.TryGetValue(componentId, out var ci))
             {
@@ -47,7 +49,7 @@ namespace Proxima
             var parts = name.Split('.');
             var list = ci.Props;
             propertyChain = new Stack<ProximaComponentCommands.PropertyInfo>();
-            for (int i = 0; i < parts.Length; i++)
+            for (var i = 0; i < parts.Length; i++)
             {
                 var prop = list?.Find(p => p.Name == parts[i]);
                 if (prop == null)
@@ -64,7 +66,8 @@ namespace Proxima
             return true;
         }
 
-        private static void SetPropertyChain(Component component, Stack<ProximaComponentCommands.PropertyInfo> propertyChain, object value)
+        private static void SetPropertyChain(Component component,
+            Stack<ProximaComponentCommands.PropertyInfo> propertyChain, object value)
         {
             var property = propertyChain.Pop();
             property.Value = value;
@@ -73,28 +76,23 @@ namespace Proxima
             {
                 var parent = propertyChain.Pop();
                 var parentObj = parent.Value;
-                if (property.Setter != null && (property.PropertyType.IsArray || property.PropertyType.IsValueType || property.PropertyType == typeof(string)))
-                {
+                if (property.Setter != null && (property.PropertyType.IsArray || property.PropertyType.IsValueType ||
+                                                property.PropertyType == typeof(string)))
                     property.Setter(parentObj, property.Value);
-                }
 
                 parent.Value = parentObj;
                 property = parent;
             }
 
-            if (property.Setter != null && (property.PropertyType.IsArray || property.PropertyType.IsValueType || property.PropertyType == typeof(string)))
-            {
+            if (property.Setter != null && (property.PropertyType.IsArray || property.PropertyType.IsValueType ||
+                                            property.PropertyType == typeof(string)))
                 property.Setter(component, property.Value);
-            }
         }
 
         [ProximaCommand("Internal")]
         public static void SetProperty(int componentId, string name, string value)
         {
-            if (!TryGetPropertyChain(componentId, name, out var component, out var propertyChain))
-            {
-                return;
-            }
+            if (!TryGetPropertyChain(componentId, name, out var component, out var propertyChain)) return;
 
             var property = propertyChain.Peek();
             if (!ProximaSerialization.TryDeserialize(property.PropertyType, value, out var newValue))
@@ -116,10 +114,7 @@ namespace Proxima
         [ProximaCommand("Internal")]
         public static void SetArraySize(int componentId, string name, int size)
         {
-            if (!TryGetPropertyChain(componentId, name, out var component, out var propertyChain))
-            {
-                return;
-            }
+            if (!TryGetPropertyChain(componentId, name, out var component, out var propertyChain)) return;
 
             var property = propertyChain.Peek();
             if (property.Value == null)
@@ -142,10 +137,7 @@ namespace Proxima
         [ProximaCommand("Internal")]
         public static void MoveArrayElement(int componentId, string name, int from, int to)
         {
-            if (!TryGetPropertyChain(componentId, name, out var component, out var propertyChain))
-            {
-                return;
-            }
+            if (!TryGetPropertyChain(componentId, name, out var component, out var propertyChain)) return;
 
             var property = propertyChain.Peek();
             if (property.Value == null)
@@ -167,10 +159,7 @@ namespace Proxima
         [ProximaCommand("Internal")]
         public static void RemoveArrayElement(int componentId, string name, int index)
         {
-            if (!TryGetPropertyChain(componentId, name, out var component, out var propertyChain))
-            {
-                return;
-            }
+            if (!TryGetPropertyChain(componentId, name, out var component, out var propertyChain)) return;
 
             var property = propertyChain.Peek();
             if (property.Value == null)
@@ -181,7 +170,8 @@ namespace Proxima
 
             if (!ArrayOrList.IsArrayOrList(property.PropertyType))
             {
-                Log.Error($"RemoveArrayElement: Property {name} on component {component.name} is not an array or list.");
+                Log.Error(
+                    $"RemoveArrayElement: Property {name} on component {component.name} is not an array or list.");
                 return;
             }
 

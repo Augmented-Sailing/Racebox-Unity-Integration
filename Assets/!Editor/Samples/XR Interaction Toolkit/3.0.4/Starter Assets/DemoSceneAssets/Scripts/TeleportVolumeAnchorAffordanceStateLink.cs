@@ -6,21 +6,27 @@ using UnityEngine.XR.Interaction.Toolkit.Locomotion.Teleportation;
 namespace UnityEngine.XR.Interaction.Toolkit.Samples.StarterAssets
 {
     /// <summary>
-    /// Helper component that binds an <see cref="XRInteractableAffordanceStateProvider"/> to a
-    /// <see cref="TeleportationMultiAnchorVolume"/> when the teleport volume sets its destination anchor to a child transform
-    /// of the state provider's originally bound interactable.
+    ///     Helper component that binds an <see cref="XRInteractableAffordanceStateProvider" /> to a
+    ///     <see cref="TeleportationMultiAnchorVolume" /> when the teleport volume sets its destination anchor to a child
+    ///     transform
+    ///     of the state provider's originally bound interactable.
     /// </summary>
     [RequireComponent(typeof(XRInteractableAffordanceStateProvider))]
-    [Obsolete("The Affordance System namespace and all associated classes have been deprecated. The existing affordance system will be moved, replaced and updated with a new interaction feedback system in a future version of XRI.")]
+    [Obsolete(
+        "The Affordance System namespace and all associated classes have been deprecated. The existing affordance system will be moved, replaced and updated with a new interaction feedback system in a future version of XRI.")]
     public class TeleportVolumeAnchorAffordanceStateLink : MonoBehaviour
     {
         [SerializeField]
-        [Tooltip("The teleport volume that will drive affordance states when its destination anchor belongs to this interactable.")]
-        TeleportationMultiAnchorVolume m_ContainingTeleportVolume;
+        [Tooltip(
+            "The teleport volume that will drive affordance states when its destination anchor belongs to this interactable.")]
+        private TeleportationMultiAnchorVolume m_ContainingTeleportVolume;
+
+        private XRInteractableAffordanceStateProvider m_AffordanceStateProvider;
+        private IXRInteractable m_Interactable;
 
         /// <summary>
-        /// The teleport volume that will drive affordance states when its destination anchor belongs to the
-        /// state provider's originally bound interactable.
+        ///     The teleport volume that will drive affordance states when its destination anchor belongs to the
+        ///     state provider's originally bound interactable.
         /// </summary>
         public TeleportationMultiAnchorVolume containingTeleportVolume
         {
@@ -28,11 +34,8 @@ namespace UnityEngine.XR.Interaction.Toolkit.Samples.StarterAssets
             set => m_ContainingTeleportVolume = value;
         }
 
-        XRInteractableAffordanceStateProvider m_AffordanceStateProvider;
-        IXRInteractable m_Interactable;
-
         /// <summary>
-        /// See <see cref="MonoBehaviour"/>.
+        ///     See <see cref="MonoBehaviour" />.
         /// </summary>
         protected void OnEnable()
         {
@@ -46,15 +49,16 @@ namespace UnityEngine.XR.Interaction.Toolkit.Samples.StarterAssets
 
             if (m_ContainingTeleportVolume == null)
             {
-                Debug.LogError($"Missing {nameof(TeleportationMultiAnchorVolume)} reference on {gameObject.name}.", this);
+                Debug.LogError($"Missing {nameof(TeleportationMultiAnchorVolume)} reference on {gameObject.name}.",
+                    this);
                 enabled = false;
                 return;
             }
 
             var interactableSource = m_AffordanceStateProvider.interactableSource;
             m_Interactable = interactableSource != null && interactableSource is IXRInteractable interactable
-                    ? interactable
-                    : m_AffordanceStateProvider.GetComponentInParent<IXRInteractable>();
+                ? interactable
+                : m_AffordanceStateProvider.GetComponentInParent<IXRInteractable>();
 
             if (m_Interactable == null)
             {
@@ -67,7 +71,7 @@ namespace UnityEngine.XR.Interaction.Toolkit.Samples.StarterAssets
         }
 
         /// <summary>
-        /// See <see cref="MonoBehaviour"/>.
+        ///     See <see cref="MonoBehaviour" />.
         /// </summary>
         protected void OnDisable()
         {
@@ -78,7 +82,7 @@ namespace UnityEngine.XR.Interaction.Toolkit.Samples.StarterAssets
                 m_AffordanceStateProvider.SetBoundInteractionReceiver(m_Interactable);
         }
 
-        void OnDestinationAnchorChanged(TeleportationMultiAnchorVolume anchorVolume)
+        private void OnDestinationAnchorChanged(TeleportationMultiAnchorVolume anchorVolume)
         {
             var anchor = anchorVolume.destinationAnchor;
             if (anchor == null)

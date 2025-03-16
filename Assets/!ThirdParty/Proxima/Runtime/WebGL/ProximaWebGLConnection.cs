@@ -1,5 +1,4 @@
 #if UNITY_WEBGL
-
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -28,7 +27,8 @@ namespace Proxima
         private ProximaDispatcher _dispatcher;
         private bool _open;
 
-        private static Dictionary<string, ProximaWebGLConnection> _connections = new Dictionary<string, ProximaWebGLConnection>();
+        private static Dictionary<string, ProximaWebGLConnection> _connections =
+ new Dictionary<string, ProximaWebGLConnection>();
 
         [DllImport("__Internal")]
         private static extern void ProximaWebGLCreate(

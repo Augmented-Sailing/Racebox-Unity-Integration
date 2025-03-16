@@ -1,6 +1,4 @@
-using System.Collections;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 public static class Startup
 {
@@ -12,7 +10,6 @@ public static class Startup
 
     private static void StartLoadingScene()
     {
-        string sceneToLoad = "App"; // Replace with your scene name
-        SceneManager.LoadScene(sceneToLoad, LoadSceneMode.Additive);
+        Scenes.Instance.LoadAppScene();
     }
 }

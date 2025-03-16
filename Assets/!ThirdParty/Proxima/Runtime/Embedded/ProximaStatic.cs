@@ -1,11 +1,13 @@
-using System.Collections.Generic;
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace Proxima
 {
     public class ProximaStatic : ScriptableObject
     {
+        public List<StaticFile> Files;
+
         [Serializable]
         public struct StaticFile
         {
@@ -13,7 +15,5 @@ namespace Proxima
             public byte[] Bytes;
             public long LastModified;
         }
-
-        public List<StaticFile> Files;
     }
 }

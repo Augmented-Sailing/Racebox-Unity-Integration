@@ -9,33 +9,54 @@ using UnityEngine.XR.Interaction.Toolkit.Samples.StarterAssets;
 namespace UnityEngine.XR.Interaction.Toolkit.Samples.ARStarterAssets
 {
     /// <summary>
-    /// Spawns an object at an <see cref="IARInteractor"/>'s raycast hit position when a trigger is activated.
+    ///     Spawns an object at an <see cref="IARInteractor" />'s raycast hit position when a trigger is activated.
     /// </summary>
     public class ARInteractorSpawnTrigger : MonoBehaviour
     {
         /// <summary>
-        /// The type of trigger to use to spawn an object.
+        ///     The type of trigger to use to spawn an object.
         /// </summary>
         public enum SpawnTriggerType
         {
             /// <summary>
-            /// Spawn an object when the interactor activates its select input
-            /// but no selection actually occurs.
+            ///     Spawn an object when the interactor activates its select input
+            ///     but no selection actually occurs.
             /// </summary>
             SelectAttempt,
 
             /// <summary>
-            /// Spawn an object when an input is performed.
+            ///     Spawn an object when an input is performed.
             /// </summary>
-            InputAction,
+            InputAction
         }
 
+        [SerializeField] [Tooltip("The AR ray interactor that determines where to spawn the object.")]
+        private XRRayInteractor m_ARInteractor;
+
+        [SerializeField] [Tooltip("The behavior to use to spawn objects.")]
+        private ObjectSpawner m_ObjectSpawner;
+
         [SerializeField]
-        [Tooltip("The AR ray interactor that determines where to spawn the object.")]
-        XRRayInteractor m_ARInteractor;
+        [Tooltip(
+            "Whether to require that the AR Interactor hits an AR Plane with a horizontal up alignment in order to spawn anything.")]
+        private bool m_RequireHorizontalUpSurface;
+
+        [SerializeField]
+        [Tooltip(
+            "The type of trigger to use to spawn an object, either when the Interactor's select action occurs or " +
+            "when a button input is performed.")]
+        private SpawnTriggerType m_SpawnTriggerType;
+
+        [SerializeField] private XRInputButtonReader m_SpawnObjectInput = new("Spawn Object");
+
+        [SerializeField] [Tooltip("When enabled, spawn will not be triggered if an object is currently selected.")]
+        private bool m_BlockSpawnWhenInteractorHasSelection = true;
+
+        private bool m_AttemptSpawn;
+        private bool m_EverHadSelection;
 
         /// <summary>
-        /// The AR ray interactor that determines where to spawn the object.
+        ///     The AR ray interactor that determines where to spawn the object.
         /// </summary>
         public XRRayInteractor arInteractor
         {
@@ -43,12 +64,8 @@ namespace UnityEngine.XR.Interaction.Toolkit.Samples.ARStarterAssets
             set => m_ARInteractor = value;
         }
 
-        [SerializeField]
-        [Tooltip("The behavior to use to spawn objects.")]
-        ObjectSpawner m_ObjectSpawner;
-
         /// <summary>
-        /// The behavior to use to spawn objects.
+        ///     The behavior to use to spawn objects.
         /// </summary>
         public ObjectSpawner objectSpawner
         {
@@ -56,13 +73,9 @@ namespace UnityEngine.XR.Interaction.Toolkit.Samples.ARStarterAssets
             set => m_ObjectSpawner = value;
         }
 
-        [SerializeField]
-        [Tooltip("Whether to require that the AR Interactor hits an AR Plane with a horizontal up alignment in order to spawn anything.")]
-        bool m_RequireHorizontalUpSurface;
-
         /// <summary>
-        /// Whether to require that the <see cref="IARInteractor"/> hits an <see cref="ARPlane"/> with an alignment of
-        /// <see cref="PlaneAlignment.HorizontalUp"/> in order to spawn anything.
+        ///     Whether to require that the <see cref="IARInteractor" /> hits an <see cref="ARPlane" /> with an alignment of
+        ///     <see cref="PlaneAlignment.HorizontalUp" /> in order to spawn anything.
         /// </summary>
         public bool requireHorizontalUpSurface
         {
@@ -70,13 +83,8 @@ namespace UnityEngine.XR.Interaction.Toolkit.Samples.ARStarterAssets
             set => m_RequireHorizontalUpSurface = value;
         }
 
-        [SerializeField]
-        [Tooltip("The type of trigger to use to spawn an object, either when the Interactor's select action occurs or " +
-            "when a button input is performed.")]
-        SpawnTriggerType m_SpawnTriggerType;
-
         /// <summary>
-        /// The type of trigger to use to spawn an object.
+        ///     The type of trigger to use to spawn an object.
         /// </summary>
         public SpawnTriggerType spawnTriggerType
         {
@@ -84,11 +92,9 @@ namespace UnityEngine.XR.Interaction.Toolkit.Samples.ARStarterAssets
             set => m_SpawnTriggerType = value;
         }
 
-        [SerializeField]
-        XRInputButtonReader m_SpawnObjectInput = new XRInputButtonReader("Spawn Object");
-
         /// <summary>
-        /// The input used to trigger spawn, if <see cref="spawnTriggerType"/> is set to <see cref="SpawnTriggerType.InputAction"/>.
+        ///     The input used to trigger spawn, if <see cref="spawnTriggerType" /> is set to
+        ///     <see cref="SpawnTriggerType.InputAction" />.
         /// </summary>
         public XRInputButtonReader spawnObjectInput
         {
@@ -96,12 +102,8 @@ namespace UnityEngine.XR.Interaction.Toolkit.Samples.ARStarterAssets
             set => XRInputReaderUtility.SetInputProperty(ref m_SpawnObjectInput, value, this);
         }
 
-        [SerializeField]
-        [Tooltip("When enabled, spawn will not be triggered if an object is currently selected.")]
-        bool m_BlockSpawnWhenInteractorHasSelection = true;
-
         /// <summary>
-        /// When enabled, spawn will not be triggered if an object is currently selected.
+        ///     When enabled, spawn will not be triggered if an object is currently selected.
         /// </summary>
         public bool blockSpawnWhenInteractorHasSelection
         {
@@ -109,29 +111,10 @@ namespace UnityEngine.XR.Interaction.Toolkit.Samples.ARStarterAssets
             set => m_BlockSpawnWhenInteractorHasSelection = value;
         }
 
-        bool m_AttemptSpawn;
-        bool m_EverHadSelection;
-
         /// <summary>
-        /// See <see cref="MonoBehaviour"/>.
+        ///     See <see cref="MonoBehaviour" />.
         /// </summary>
-        void OnEnable()
-        {
-            m_SpawnObjectInput.EnableDirectActionIfModeUsed();
-        }
-
-        /// <summary>
-        /// See <see cref="MonoBehaviour"/>.
-        /// </summary>
-        void OnDisable()
-        {
-            m_SpawnObjectInput.DisableDirectActionIfModeUsed();
-        }
-
-        /// <summary>
-        /// See <see cref="MonoBehaviour"/>.
-        /// </summary>
-        void Start()
+        private void Start()
         {
             if (m_ObjectSpawner == null)
 #if UNITY_2023_1_OR_NEWER
@@ -148,9 +131,9 @@ namespace UnityEngine.XR.Interaction.Toolkit.Samples.ARStarterAssets
         }
 
         /// <summary>
-        /// See <see cref="MonoBehaviour"/>.
+        ///     See <see cref="MonoBehaviour" />.
         /// </summary>
-        void Update()
+        private void Update()
         {
             // Wait a frame after the Spawn Object input is triggered to actually cast against AR planes and spawn
             // in order to ensure the touchscreen gestures have finished processing to allow the ray pose driver
@@ -198,6 +181,22 @@ namespace UnityEngine.XR.Interaction.Toolkit.Samples.ARStarterAssets
                         m_AttemptSpawn = !m_ARInteractor.hasSelection && !m_EverHadSelection;
                     break;
             }
+        }
+
+        /// <summary>
+        ///     See <see cref="MonoBehaviour" />.
+        /// </summary>
+        private void OnEnable()
+        {
+            m_SpawnObjectInput.EnableDirectActionIfModeUsed();
+        }
+
+        /// <summary>
+        ///     See <see cref="MonoBehaviour" />.
+        /// </summary>
+        private void OnDisable()
+        {
+            m_SpawnObjectInput.DisableDirectActionIfModeUsed();
         }
     }
 }

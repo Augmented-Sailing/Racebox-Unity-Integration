@@ -3,28 +3,32 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Security.Cryptography.X509Certificates;
-using UnityEngine;
-using ProximaWebSocketSharp.Server;
 using System.Net;
 using System.Net.Sockets;
+using System.Security.Authentication;
+using System.Security.Cryptography.X509Certificates;
+using System.Text;
 using System.Threading.Tasks;
+using ProximaWebSocketSharp;
+using ProximaWebSocketSharp.Server;
+using UnityEngine;
 
 namespace Proxima
 {
     internal class ProximaEmbeddedServer : ProximaServer
     {
+        private readonly PfxAsset _cert;
+        private readonly string _certPass;
+        private readonly ProximaDispatcher _dispatcher;
+        private readonly Dictionary<string, ProximaStatic.StaticFile> _pathToFile;
+        private readonly int _port;
         private ConcurrentQueue<(ProximaConnection, string)> _receiveQueue;
         private HttpServer _server;
-        private ProximaDispatcher _dispatcher;
-        private int _port;
-        private bool _useHttps;
-        private PfxAsset _cert;
-        private string _certPass;
-        private Dictionary<string, ProximaStatic.StaticFile> _pathToFile;
-        private ProximaStatus _status;
+        private readonly ProximaStatus _status;
+        private readonly bool _useHttps;
 
-        public ProximaEmbeddedServer(ProximaDispatcher dispatcher, ProximaStatus status, int port, bool useHttps, PfxAsset cert, string certPass)
+        public ProximaEmbeddedServer(ProximaDispatcher dispatcher, ProximaStatus status, int port, bool useHttps,
+            PfxAsset cert, string certPass)
         {
             _dispatcher = dispatcher;
             _port = port;
@@ -41,21 +45,18 @@ namespace Proxima
 
             var staticFiles = Resources.Load<ProximaStatic>("Proxima/web");
             _pathToFile = new Dictionary<string, ProximaStatic.StaticFile>();
-            foreach (var file in staticFiles.Files)
-            {
-                _pathToFile.Add(file.Path, file);
-            }
+            foreach (var file in staticFiles.Files) _pathToFile.Add(file.Path, file);
         }
 
         public void Start(string displayName, string password)
         {
-            _server = new HttpServer(System.Net.IPAddress.Any, _port, _useHttps);
-            _server.Log.Level = ProximaWebSocketSharp.LogLevel.Trace;
+            _server = new HttpServer(IPAddress.Any, _port, _useHttps);
+            _server.Log.Level = LogLevel.Trace;
 
             if (_useHttps)
             {
                 _server.SslConfiguration.ServerCertificate = new X509Certificate2(_cert.Bytes, _certPass);
-                _server.SslConfiguration.EnabledSslProtocols = System.Security.Authentication.SslProtocols.Tls12;
+                _server.SslConfiguration.EnabledSslProtocols = SslProtocols.Tls12;
             }
 
             var epoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
@@ -87,12 +88,15 @@ namespace Proxima
                                     return;
                                 }
                             }
-                        } catch (Exception) {}
+                        }
+                        catch (Exception)
+                        {
+                        }
                     }
 
                     var lastModified = string.Format("{0:ddd, dd MMM yyyy HH:mm:ss} GMT", lastModifiedDt);
                     res.AppendHeader("Last-Modified", lastModified);
-                    res.ContentEncoding = System.Text.Encoding.UTF8;
+                    res.ContentEncoding = Encoding.UTF8;
                     res.ContentType = ProximaMimeTypes.Get(Path.GetExtension(file.Path));
                     res.ContentLength64 = file.Bytes.Length;
                     res.OutputStream.Write(file.Bytes, 0, file.Bytes.Length);
@@ -100,17 +104,33 @@ namespace Proxima
                 }
                 else
                 {
-                    res.StatusCode = (int)System.Net.HttpStatusCode.NotFound;
+                    res.StatusCode = (int)HttpStatusCode.NotFound;
                     res.Close();
                 }
             };
 
             _receiveQueue = new ConcurrentQueue<(ProximaConnection, string)>();
-            _server.AddWebSocketService<ProximaEmbeddedConnection>("/api", (api) => api.Initialize(displayName, password, _dispatcher, _status, _receiveQueue));
+            _server.AddWebSocketService<ProximaEmbeddedConnection>("/api",
+                api => api.Initialize(displayName, password, _dispatcher, _status, _receiveQueue));
 
 
             _server.Start();
             UpdateConnectionInfo();
+        }
+
+        public void Stop()
+        {
+            _server?.Stop();
+            _server = null;
+            _receiveQueue = null;
+        }
+
+        public bool TryGetMessage(out (ProximaConnection, string) message)
+        {
+            if (_receiveQueue != null) return _receiveQueue.TryDequeue(out message);
+
+            message = (null, "");
+            return false;
         }
 
         public async void UpdateConnectionInfo()
@@ -130,10 +150,7 @@ namespace Proxima
                     // Try to connect to Google DNS servers. This is a more reliable way to get the local IP address.
                     var task = socket.ConnectAsync("8.8.8.8", 53);
                     await Task.WhenAny(task, Task.Delay(100));
-                    if (task.Status == TaskStatus.RanToCompletion)
-                    {
-                        return socket.LocalEndPoint.ToString().Split(':')[0];
-                    }
+                    if (task.Status == TaskStatus.RanToCompletion) return socket.LocalEndPoint.ToString().Split(':')[0];
                 }
             }
             catch (Exception e)
@@ -144,28 +161,8 @@ namespace Proxima
             // If not connected to the internet, or this is taking too long, fallback to the first IPv4 address.
             return Dns.GetHostEntry(Dns.GetHostName())
                 .AddressList.First(
-                    f => f.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
+                    f => f.AddressFamily == AddressFamily.InterNetwork)
                 .ToString();
-        }
-
-        public void Stop()
-        {
-            _server?.Stop();
-            _server = null;
-            _receiveQueue = null;
-        }
-
-        public bool TryGetMessage(out (ProximaConnection, string) message)
-        {
-            if (_receiveQueue != null)
-            {
-                return _receiveQueue.TryDequeue(out message);
-            }
-            else
-            {
-                message = (null, "");
-                return false;
-            }
         }
     }
 }
