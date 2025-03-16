@@ -1,30 +1,29 @@
 using System;
 using System.Text;
-#if UNITY_EDITOR
-using UnityEditor;
-#endif
 using Android.BLE;
 using Android.BLE.Commands;
 using RaceboxIntegration.DataModels;
 using RaceboxIntegration.Events;
 using UnityEngine;
+using Random = UnityEngine.Random;
+#if UNITY_EDITOR
+#endif
 
 namespace RaceboxIntegration.Other
 {
     public class RaceboxDeviceController : IDeviceController
     {
+        private byte[] buffer = new byte[512];
+        private int bufferPos;
+
+        private SubscribeToCharacteristic readCommand;
         public string Firmware { get; private set; }
         public BluetoothDevice Device { get; private set; }
         public RaceboxData Data { get; private set; }
-        
-        private SubscribeToCharacteristic readCommand;
-        
-        private byte[] buffer = new byte[512]; 
-        private int bufferPos = 0;
 
         public void Execute(BluetoothDevice device)
         {
-            this.Device = device;
+            Device = device;
 #if UNITY_EDITOR
             SimulateRaceboxData();
 #else
@@ -38,39 +37,39 @@ namespace RaceboxIntegration.Other
         {
             Data = new RaceboxData
             {
-                iTOW = (uint)UnityEngine.Random.Range(0, int.MaxValue),
-                year = (ushort)UnityEngine.Random.Range(2000, 2030),
-                month = (byte)UnityEngine.Random.Range(1, 12),
-                day = (byte)UnityEngine.Random.Range(1, 28),
-                hour = (byte)UnityEngine.Random.Range(0, 23),
-                minute = (byte)UnityEngine.Random.Range(0, 59),
-                second = (byte)UnityEngine.Random.Range(0, 59),
-                validityFlags = (byte)UnityEngine.Random.Range(0, 255),
-                timeAccuracy = (uint)UnityEngine.Random.Range(0, int.MaxValue),
-                nanoseconds = UnityEngine.Random.Range(0, int.MaxValue),
-                fixStatus = (byte)UnityEngine.Random.Range(0, 3),
-                fixStatusFlags = (byte)UnityEngine.Random.Range(0, 255),
-                dateTimeFlags = (byte)UnityEngine.Random.Range(0, 255),
-                numSVs = (byte)UnityEngine.Random.Range(0, 255),
-                longitude = UnityEngine.Random.Range(-1800000000, 1800000000),
-                latitude = UnityEngine.Random.Range(-900000000, 900000000),
-                wgsAltitude = UnityEngine.Random.Range(-10000, 10000),
-                mslAltitude = UnityEngine.Random.Range(-10000, 10000),
-                horizontalAccuracy = (uint)UnityEngine.Random.Range(0, int.MaxValue),
-                verticalAccuracy = (uint)UnityEngine.Random.Range(0, int.MaxValue),
-                speed = UnityEngine.Random.Range(0, 100000),
-                heading = UnityEngine.Random.Range(0, 3600000),
-                speedAccuracy = (uint)UnityEngine.Random.Range(0, int.MaxValue),
-                headingAccuracy = (uint)UnityEngine.Random.Range(0, int.MaxValue),
-                pdop = (ushort)UnityEngine.Random.Range(0, 1000),
-                latLonFlags = (byte)UnityEngine.Random.Range(0, 255),
-                batteryStatus = (byte)UnityEngine.Random.Range(0, 255),
-                gForceX = (short)UnityEngine.Random.Range(short.MinValue, short.MaxValue),
-                gForceY = (short)UnityEngine.Random.Range(short.MinValue, short.MaxValue),
-                gForceZ = (short)UnityEngine.Random.Range(short.MinValue, short.MaxValue),
-                rotRateX = (short)UnityEngine.Random.Range(short.MinValue, short.MaxValue),
-                rotRateY = (short)UnityEngine.Random.Range(short.MinValue, short.MaxValue),
-                rotRateZ = (short)UnityEngine.Random.Range(short.MinValue, short.MaxValue)
+                iTOW = (uint)Random.Range(0, int.MaxValue),
+                year = (ushort)Random.Range(2000, 2030),
+                month = (byte)Random.Range(1, 12),
+                day = (byte)Random.Range(1, 28),
+                hour = (byte)Random.Range(0, 23),
+                minute = (byte)Random.Range(0, 59),
+                second = (byte)Random.Range(0, 59),
+                validityFlags = (byte)Random.Range(0, 255),
+                timeAccuracy = (uint)Random.Range(0, int.MaxValue),
+                nanoseconds = Random.Range(0, int.MaxValue),
+                fixStatus = (byte)Random.Range(0, 3),
+                fixStatusFlags = (byte)Random.Range(0, 255),
+                dateTimeFlags = (byte)Random.Range(0, 255),
+                numSVs = (byte)Random.Range(0, 255),
+                longitude = Random.Range(-1800000000, 1800000000),
+                latitude = Random.Range(-900000000, 900000000),
+                wgsAltitude = Random.Range(-10000, 10000),
+                mslAltitude = Random.Range(-10000, 10000),
+                horizontalAccuracy = (uint)Random.Range(0, int.MaxValue),
+                verticalAccuracy = (uint)Random.Range(0, int.MaxValue),
+                speed = Random.Range(0, 100000),
+                heading = Random.Range(0, 3600000),
+                speedAccuracy = (uint)Random.Range(0, int.MaxValue),
+                headingAccuracy = (uint)Random.Range(0, int.MaxValue),
+                pdop = (ushort)Random.Range(0, 1000),
+                latLonFlags = (byte)Random.Range(0, 255),
+                batteryStatus = (byte)Random.Range(0, 255),
+                gForceX = (short)Random.Range(short.MinValue, short.MaxValue),
+                gForceY = (short)Random.Range(short.MinValue, short.MaxValue),
+                gForceZ = (short)Random.Range(short.MinValue, short.MaxValue),
+                rotRateX = (short)Random.Range(short.MinValue, short.MaxValue),
+                rotRateY = (short)Random.Range(short.MinValue, short.MaxValue),
+                rotRateZ = (short)Random.Range(short.MinValue, short.MaxValue)
             };
 
             MainEventBus.OnDeviceUpdated?.Invoke(Device.DeviceUID);
@@ -97,7 +96,7 @@ namespace RaceboxIntegration.Other
                 Device.DeviceUID,
                 "0000180a-0000-1000-8000-00805f9b34fb",
                 "00002a26-0000-1000-8000-00805f9b34fb",
-                (byte[] value) =>
+                value =>
                 {
                     Firmware = Encoding.UTF8.GetString(value);
                     Debug.Log("Firmware: " + Firmware);
@@ -105,7 +104,7 @@ namespace RaceboxIntegration.Other
                 true
             ));
         }
-        
+
         public void SetGNSSConfiguration(byte platformModel, bool enable3DSpeed, byte minAccuracy)
         {
             // Check if the device is connected
@@ -116,49 +115,49 @@ namespace RaceboxIntegration.Other
             }
 
             // Construct the payload
-            byte[] payload = new byte[3];
-            payload[0] = platformModel;           // Dynamic Platform Model (e.g., 4 for Automotive)
+            var payload = new byte[3];
+            payload[0] = platformModel; // Dynamic Platform Model (e.g., 4 for Automotive)
             payload[1] = (byte)(enable3DSpeed ? 1 : 0); // Enable 3D-Speed Reporting (0 or 1)
-            payload[2] = minAccuracy;             // Minimum Horizontal Accuracy (in 0.1m units)
+            payload[2] = minAccuracy; // Minimum Horizontal Accuracy (in 0.1m units)
 
             // Build the UBX packet
-            byte[] packet = BuildUBXPacket(0xFF, 0x27, payload);
+            var packet = BuildUBXPacket(0xFF, 0x27, payload);
 
             // Define UUIDs for the Racebox UART service
-            string uartServiceUuid = "6e400001-b5a3-f393-e0a9-e50e24dcca9e";
-            string rxCharacteristicUuid = "6e400002-b5a3-f393-e0a9-e50e24dcca9e";
+            var uartServiceUuid = "6e400001-b5a3-f393-e0a9-e50e24dcca9e";
+            var rxCharacteristicUuid = "6e400002-b5a3-f393-e0a9-e50e24dcca9e";
 
             // Queue the WriteToCharacteristic command with Base64-encoded data
             BleManager.Instance.QueueCommand(new WriteToCharacteristic(
-                Device.DeviceUID,           // Device address
-                uartServiceUuid,            // Service UUID
-                rxCharacteristicUuid,       // Characteristic UUID
+                Device.DeviceUID, // Device address
+                uartServiceUuid, // Service UUID
+                rxCharacteristicUuid, // Characteristic UUID
                 Convert.ToBase64String(packet), // Base64-encoded UBX packet
-                true                        // Use customGatt to ensure Base64 encoding
+                true // Use customGatt to ensure Base64 encoding
             ));
 
             Debug.Log("Sent GNSS configuration command.");
         }
-        
+
         /// <summary>
-        /// Sets the optimal GNSS configuration for the Racebox device (Automotive, ground speed, 1.0m accuracy).
+        ///     Sets the optimal GNSS configuration for the Racebox device (Automotive, ground speed, 1.0m accuracy).
         /// </summary>
         public void SetOptimalGNSSConfiguration()
         {
-            SetGNSSConfiguration(4, false, 1); // Automotive, ground speed, 1.0m accuracy
+            SetGNSSConfiguration(4, false, 0); // Automotive, ground speed, 1.0m accuracy
         }
-        
+
         private byte[] BuildUBXPacket(byte classId, byte messageId, byte[] payload)
         {
-            int payloadLength = payload != null ? payload.Length : 0;
-            byte[] packet = new byte[8 + payloadLength]; // Header (2) + Class/ID (2) + Length (2) + Payload + Checksum (2)
+            var payloadLength = payload != null ? payload.Length : 0;
+            var packet = new byte[8 + payloadLength]; // Header (2) + Class/ID (2) + Length (2) + Payload + Checksum (2)
 
             // Header
             packet[0] = 0xB5; // UBX sync character 1
             packet[1] = 0x62; // UBX sync character 2
 
             // Class and ID
-            packet[2] = classId;   // 0xFF for Racebox-specific messages
+            packet[2] = classId; // 0xFF for Racebox-specific messages
             packet[3] = messageId; // 0x27 for GNSS Receiver Configuration
 
             // Length (little-endian)
@@ -166,25 +165,23 @@ namespace RaceboxIntegration.Other
             packet[5] = (byte)((payloadLength >> 8) & 0xFF);
 
             // Payload
-            if (payload != null)
-            {
-                Array.Copy(payload, 0, packet, 6, payloadLength);
-            }
+            if (payload != null) Array.Copy(payload, 0, packet, 6, payloadLength);
 
             // Calculate checksum (CK_A and CK_B)
             byte ckA = 0;
             byte ckB = 0;
-            for (int i = 2; i < 6 + payloadLength; i++)
+            for (var i = 2; i < 6 + payloadLength; i++)
             {
                 ckA += packet[i];
                 ckB += ckA;
             }
+
             packet[6 + payloadLength] = ckA;
             packet[7 + payloadLength] = ckB;
 
             return packet;
         }
-        
+
         private void OnDataReceived(byte[] value)
         {
             if (value == null)
@@ -192,27 +189,31 @@ namespace RaceboxIntegration.Other
 #if UNITY_EDITOR
                 SimulateRaceboxData();
 #endif
+                return;
             }
-            //Debug.Log("Raw Data: " + BitConverter.ToString(value));
+
+            // Ensure the buffer has enough space to accommodate the new data
+            if (bufferPos + value.Length > buffer.Length) Array.Resize(ref buffer, bufferPos + value.Length);
+
             Array.Copy(value, 0, buffer, bufferPos, value.Length);
             bufferPos += value.Length;
 
             while (bufferPos >= 88)
-            {
                 if (buffer[0] == 0xB5 && buffer[1] == 0x62)
                 {
-                    ushort length = BitConverter.ToUInt16(buffer, 4);
+                    var length = BitConverter.ToUInt16(buffer, 4);
                     if (length == 80 && buffer[2] == 0xFF && buffer[3] == 0x01)
                     {
                         byte ckA = 0, ckB = 0;
-                        for (int i = 2; i < 86; i++)
+                        for (var i = 2; i < 86; i++)
                         {
                             ckA += buffer[i];
                             ckB += ckA;
                         }
+
                         if (ckA == buffer[86] && ckB == buffer[87])
                         {
-                            byte[] packet = new byte[86];
+                            var packet = new byte[86];
                             Array.Copy(buffer, 0, packet, 0, 86);
                             ParseRaceBoxData(packet);
                             ShiftBuffer(88);
@@ -230,12 +231,11 @@ namespace RaceboxIntegration.Other
                 }
                 else
                 {
-                    int shift = 1;
+                    var shift = 1;
                     while (shift < bufferPos && (buffer[shift] != 0xB5 || buffer[shift + 1] != 0x62))
                         shift++;
                     ShiftBuffer(shift);
                 }
-            }
         }
 
         private void ShiftBuffer(int amount)
@@ -262,8 +262,8 @@ namespace RaceboxIntegration.Other
             Data.fixStatusFlags = packet[27];
             Data.dateTimeFlags = packet[28];
             Data.numSVs = packet[29];
-            Data.longitude = BitConverter.ToInt32(packet, 30);
-            Data.latitude = BitConverter.ToInt32(packet, 34);
+            Data.longitude = BitConverter.ToInt32(packet, 30) / 1e7; // Convert to double
+            Data.latitude = BitConverter.ToInt32(packet, 34) / 1e7; // Convert to double
             Data.wgsAltitude = BitConverter.ToInt32(packet, 38);
             Data.mslAltitude = BitConverter.ToInt32(packet, 42);
             Data.horizontalAccuracy = BitConverter.ToUInt32(packet, 46);
@@ -283,7 +283,7 @@ namespace RaceboxIntegration.Other
             Data.rotRateZ = BitConverter.ToInt16(packet, 84);
 
             Data.timestamp = $"{Data.year}-{Data.month:00}-{Data.day:00} " +
-                                    $"{Data.hour:00}:{Data.minute:00}:{Data.second:00}.{Data.nanoseconds:000000000}";
+                             $"{Data.hour:00}:{Data.minute:00}:{Data.second:00}.{Data.nanoseconds:000000000}";
             Data.validDate = (Data.validityFlags & 0x01) != 0;
             Data.validTime = (Data.validityFlags & 0x02) != 0;
             Data.fullyResolved = (Data.validityFlags & 0x04) != 0;
@@ -316,8 +316,8 @@ namespace RaceboxIntegration.Other
                    $"Fix Status Flags: ValidFix={Data.validFix}, DiffCorr={Data.diffCorrApplied}, PowerState={Data.powerState}, Heading={Data.validHeading}, CarrierPhase={Data.carrierPhase}\n" +
                    $"Date/Time Flags: Confirmed={Data.dateTimeConfirmed}, DateValid={Data.dateValidConfirmed}, TimeValid={Data.timeValidConfirmed}\n" +
                    $"Number of SVs: {Data.numSVs}\n" +
-                   $"Longitude: {Data.longitude / 1e7f} degrees\n" +
-                   $"Latitude: {Data.latitude / 1e7f} degrees\n" +
+                   $"Longitude: {Data.longitude} degrees\n" +
+                   $"Latitude: {Data.latitude} degrees\n" +
                    $"WGS Altitude: {Data.wgsAltitude / 1000f} m\n" +
                    $"MSL Altitude: {Data.mslAltitude / 1000f} m\n" +
                    $"Horizontal Accuracy: {Data.horizontalAccuracy / 1000f} m\n" +

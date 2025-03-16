@@ -3,8 +3,8 @@ using System;
 namespace RaceboxIntegration.DataModels
 {
     /// <summary>
-    /// Data model representing the parsed information from a Racebox device.
-    /// Contains all sensor data including GPS coordinates, IMU readings, and device status.
+    ///     Data model representing the parsed information from a Racebox device.
+    ///     Contains all sensor data including GPS coordinates, IMU readings, and device status.
     /// </summary>
     [Serializable]
     public class RaceboxData
@@ -24,8 +24,8 @@ namespace RaceboxIntegration.DataModels
         public byte fixStatusFlags;
         public byte dateTimeFlags;
         public byte numSVs;
-        public int longitude;
-        public int latitude;
+        public double longitude; // Changed to double
+        public double latitude; // Changed to double
         public int wgsAltitude;
         public int mslAltitude;
         public uint horizontalAccuracy;

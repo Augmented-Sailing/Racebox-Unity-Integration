@@ -8,18 +8,14 @@ namespace RaceboxIntegration.Managers
     [DefaultExecutionOrder(-500)]
     public class RaceboxManager : MonoBehaviour
     {
-        public static RaceboxManager Instance { get; private set; }
-
-        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-        private static void ResetInstance()
-        {
-            Instance = null;
-        }
-
         public RaceboxDeviceController RaceboxDeviceController;
-        public bool IsRaceboxConnected { get => RaceboxDeviceController != null && RaceboxDeviceController.Device.IsConnected && RaceboxDeviceController.Data != null; }
 
         private Coroutine simulationCoroutine;
+        public static RaceboxManager Instance { get; private set; }
+
+        public bool IsRaceboxConnected => RaceboxDeviceController != null &&
+                                          RaceboxDeviceController.Device.IsConnected &&
+                                          RaceboxDeviceController.Data != null;
 
         private void Awake()
         {
@@ -29,6 +25,7 @@ namespace RaceboxIntegration.Managers
                 Destroy(gameObject);
                 return;
             }
+
             Instance = this;
             DontDestroyOnLoad(gameObject);
         }
@@ -43,36 +40,35 @@ namespace RaceboxIntegration.Managers
             MainEventBus.OnDeviceConnectionUpdated.RemoveListener(OnDeviceConnectionStatusUpdated);
         }
 
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetInstance()
+        {
+            Instance = null;
+        }
+
         private void OnDeviceConnectionStatusUpdated(string deviceUid)
         {
-            BluetoothDevice device = BluetoothManager.Instance.GetDevice(deviceUid);
+            var device = BluetoothManager.Instance.GetDevice(deviceUid);
             if (device == null)
             {
                 Debug.LogWarning("Device not found: " + deviceUid);
                 return;
             }
 
-            RaceboxDeviceController raceboxDeviceController = device.DeviceController as RaceboxDeviceController;
+            var raceboxDeviceController = device.DeviceController as RaceboxDeviceController;
             if (raceboxDeviceController != null)
             {
                 RaceboxDeviceController = raceboxDeviceController;
                 if (IsRaceboxConnected)
-                {
                     StartSimulation();
-                }
                 else
-                {
                     StopSimulation();
-                }
             }
         }
 
         private void StartSimulation()
         {
-            if (simulationCoroutine == null)
-            {
-                simulationCoroutine = StartCoroutine(SimulateData());
-            }
+            if (simulationCoroutine == null) simulationCoroutine = StartCoroutine(SimulateData());
         }
 
         private void StopSimulation()
@@ -88,10 +84,7 @@ namespace RaceboxIntegration.Managers
         {
             while (true)
             {
-                if (RaceboxDeviceController != null)
-                {
-                    RaceboxDeviceController.SimulateRaceboxData();
-                }
+                if (RaceboxDeviceController != null) RaceboxDeviceController.SimulateRaceboxData();
                 yield return new WaitForSeconds(0.2f); // Update every second
             }
         }
