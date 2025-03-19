@@ -2,16 +2,18 @@ using RaceboxIntegration.Events;
 using RaceboxIntegration.Managers;
 using UnityEngine;
 
-public class ARSample : MonoBehaviour
+public class ARWrapper : MonoBehaviour
 {
     [SerializeField] private GPSTracker gpsTracker;
-    [SerializeField] private CameraGPSController4 _cameraGpsController4;
+    [SerializeField] private CameraGPSController cameraGpsController;
+
+    [SerializeField] private Transform modelInstance;
+    [SerializeField] private Transform anchor;
 
     private RaceboxManager raceboxManager;
-    private bool useNativeGPS = false; // Tracks which source we’re using
-    private bool isFirstSample = true;
+    public bool useNativeGPS { get; private set; } = true;
 
-    void Start()
+    void Awake()
     {
         // Initialize RaceboxManager
         raceboxManager = Provider.Instance.GetService<RaceboxManager>();
@@ -24,13 +26,18 @@ public class ARSample : MonoBehaviour
     void OnEnable()
     {
         // Listen for Racebox device updates
+        if (raceboxManager.IsRaceboxConnected)
+            useNativeGPS = false;
+        
         MainEventBus.OnDeviceUpdated.AddListener(OnDeviceRefreshed);
+        MainEventBus.OnDeviceConnectionUpdated.AddListener(OnDeviceRefreshed);
     }
 
     void OnDisable()
     {
         // Clean up listener and stop tracking
         MainEventBus.OnDeviceUpdated.RemoveListener(OnDeviceRefreshed);
+        MainEventBus.OnDeviceConnectionUpdated.RemoveListener(OnDeviceRefreshed);
         StopAllTracking();
     }
 
@@ -113,21 +120,49 @@ public class ARSample : MonoBehaviour
         UpdateTracking(latDegrees, lonDegrees, altitudeMeters, headingDegrees, accuracy);
     }
 
+    private bool initialized;
+    
     private void UpdateTracking(double latDegrees, double lonDegrees, float altitudeMeters, float headingDegrees, float accuracy)
     {
         if(gpsTracker != null)
             gpsTracker.UpdateGPSData(latDegrees, lonDegrees, accuracy);
-        if(_cameraGpsController4 != null) 
-            _cameraGpsController4.UpdateGPSLocation(latDegrees, lonDegrees);
+        if(cameraGpsController != null) 
+            cameraGpsController.UpdateGPSLocation(latDegrees, lonDegrees);
+
+        if (!initialized)
+        {
+            initialized = true;
+            ResetOrigin();
+        }
     }
 
     public void ResetOrigin()
     {
         if(gpsTracker != null)
             gpsTracker.RefreshOrigin();
-        if(_cameraGpsController4 != null)
-            _cameraGpsController4.RefreshOrigin();
-        isFirstSample = true;
+        if(cameraGpsController != null)
+            cameraGpsController.RefreshOrigin();
+        modelInstance.position = anchor.position;
         Debug.Log("Origin reset in ARSampleManager");
+    }
+
+    public void SetRotation(float arg0)
+    {
+        modelInstance.localEulerAngles = new Vector3(0, arg0, 0);
+    }
+
+    public void SetScale(float arg0)
+    {
+        modelInstance.localScale = Vector3.one * arg0;
+    }
+
+    public float GetRotation()
+    {
+        return modelInstance.localEulerAngles.y;
+    }
+
+    public float GetScale()
+    {
+        return modelInstance.localScale.x;
     }
 }

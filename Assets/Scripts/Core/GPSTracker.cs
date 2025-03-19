@@ -6,19 +6,19 @@ using System.Collections.Generic;
 public class GPSTracker : MonoBehaviour
 {
     // Public references to UI elements
-    public RectTransform chartPanel;    // The UI Panel representing the chart area
-    public GameObject dotPrefab;        // Prefab for historical position dots
-    public GameObject currentDot;       // GameObject for the current position marker
-    public UILineRenderer line;         // UILineRenderer to draw the movement path
+    [SerializeField] private RectTransform chartPanel;    // The UI Panel representing the chart area
+    [SerializeField] private GameObject dotPrefab;        // Prefab for historical position dots
+    [SerializeField] private GameObject currentDot;       // GameObject for the current position marker
+    [SerializeField] private UILineRenderer line;         // UILineRenderer to draw the movement path
 
     // Public variables for configuration
-    public float positionThreshold = 0.000001f; // Threshold for adding new positions
-    public int smoothingWindowSize = 5; // Window size for the moving average filter
-    public float fadeDuration = 5f; // Duration for the dots to fade out
+    [SerializeField] private float positionThreshold = 0.000001f; // Threshold for adding new positions
+    [SerializeField] private int smoothingWindowSize = 5; // Window size for the moving average filter
+    [SerializeField] private float fadeDuration = 5f; // Duration for the dots to fade out
   
     [Space]
-    [SerializeField] public Transform modelInstance;
-    [SerializeField] public Transform anchor;
+    [SerializeField] private Transform modelInstance;
+    [SerializeField] private Transform anchor;
     
     // Private lists to store history and UI dots
     private List<Vector2> history = new List<Vector2>(); // x = longitude, y = latitude

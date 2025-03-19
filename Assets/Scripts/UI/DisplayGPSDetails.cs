@@ -11,6 +11,10 @@ public class DisplayGPSDetails : MonoBehaviour
     private void OnEnable()
     {
         MainEventBus.OnDeviceUpdated.AddListener(DeviceUpdated);
+        if(RaceboxManager.Instance.IsRaceboxConnected == false)
+        {
+            detailsText.SetText("Waiting for Racebox Connection");
+        }
     }
 
     private void DeviceUpdated(string deviceUid)
@@ -27,17 +31,16 @@ public class DisplayGPSDetails : MonoBehaviour
             double latDegrees = raceboxData.latitude;
             double lonDegrees = raceboxData.longitude;
             float altitudeMeters = raceboxData.wgsAltitude;
-            float headingDegrees = raceboxData.heading;
             float accuracy = raceboxData.horizontalAccuracy;
-            UpdateDetailsText(latDegrees, lonDegrees, altitudeMeters, headingDegrees, accuracy);
+            UpdateDetailsText(latDegrees, lonDegrees, altitudeMeters, accuracy);
         }
     }
 
-    private void UpdateDetailsText(double latDegrees, double lonDegrees, float altitudeMeters, float headingDegrees, float accuracy)
+    private void UpdateDetailsText(double latDegrees, double lonDegrees, float altitudeMeters, float accuracy)
     {
         if (detailsText != null)
         {
-            detailsText.text = $"Lat: {latDegrees:F8}\nLon: {lonDegrees:F8}\nAlt: {altitudeMeters:F4}m\nHeading: {headingDegrees:F2}°\nAccuracy: {accuracy:F3}mm";
+            detailsText.text = $"Lat: {latDegrees:F8}\nLon: {lonDegrees:F8}\nAlt: {altitudeMeters:F4}m\nAccuracy: {accuracy:F3}mm";
         }
     }
 }
