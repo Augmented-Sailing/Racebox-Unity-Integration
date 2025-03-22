@@ -8,6 +8,7 @@ public class ARUI : MonoBehaviour
     [SerializeField] private Toggle useNativeGPS;
     [SerializeField] private FloatController rotationControl;
     [SerializeField] private FloatController scaleControl;
+    [SerializeField] private FloatController yPosControl;
     [SerializeField] private ARWrapper arWrapper;
 
     private void Start()
@@ -21,6 +22,7 @@ public class ARUI : MonoBehaviour
         rotationControl.onValueChanged.AddListener(arWrapper.SetRotation);
 
         scaleControl.onValueChanged.AddListener(arWrapper.SetScale);
+        yPosControl.onValueChanged.AddListener(arWrapper.SetYPos);
     }
 
     private void OnEnable()
@@ -32,6 +34,10 @@ public class ARUI : MonoBehaviour
         scaleControl.MinValue = 0.1f;
         scaleControl.MaxValue = 10f;
         scaleControl.SetValueWithoutNotify(arWrapper.GetScale());
+
+        yPosControl.MinValue = -10;
+        yPosControl.MaxValue = 10;
+        yPosControl.SetValueWithoutNotify(arWrapper.GetYPos());
 
         useNativeGPS.SetIsOnWithoutNotify(arWrapper.useNativeGPS);
     }

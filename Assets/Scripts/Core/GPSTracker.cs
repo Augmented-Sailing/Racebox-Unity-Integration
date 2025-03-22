@@ -16,10 +16,6 @@ public class GPSTracker : MonoBehaviour
     [SerializeField] private int smoothingWindowSize = 5; // Window size for the moving average filter
     [SerializeField] private float fadeDuration = 5f; // Duration for the dots to fade out
   
-    [Space]
-    [SerializeField] private Transform modelInstance;
-    [SerializeField] private Transform anchor;
-    
     // Private lists to store history and UI dots
     private List<Vector2> history = new List<Vector2>(); // x = longitude, y = latitude
     private List<RectTransform> dots = new List<RectTransform>();
@@ -192,7 +188,5 @@ private void UpdateChart()
 
         // Log the reset action
         Debug.Log("Origin and history reset, chart cleared and centered.");
-
-        modelInstance.position = anchor.position - Vector3.down * 5f;
     }
 }

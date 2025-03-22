@@ -19,7 +19,6 @@ public class CameraGPSController : MonoBehaviour
     [Tooltip("Speed of the camera's Lerp (position).")]
     public float moveSmoothSpeed = 5f;
 
-    public bool useGPSAltitude = false;
     public float fixedHeight = 5f;
 
     // --- Threshold in meters to "ignore" minimal displacements ---
@@ -32,7 +31,7 @@ public class CameraGPSController : MonoBehaviour
     void Start()
     {
         // Force the camera to the initial position
-        Vector3 initialPos = GPSToWorldPosition(lat, lon, 0f);
+        Vector3 initialPos = GPSToWorldPosition(lat, lon);
         transform.position = initialPos;
     }
 
@@ -44,7 +43,7 @@ public class CameraGPSController : MonoBehaviour
     private void UpdateCamera(bool lerp)
     {
         // Calculate the target position in Unity
-        Vector3 targetPos = GPSToWorldPosition(lat, lon, 0);
+        Vector3 targetPos = GPSToWorldPosition(lat, lon);
 
         // Interpolate the camera's position
         Vector3 newPos = targetPos;
@@ -58,7 +57,7 @@ public class CameraGPSController : MonoBehaviour
     // ========================================
     // CONVERSION AND CLAMP METHOD
     // ========================================
-    private Vector3 GPSToWorldPosition(float lat, float lon, float alt)
+    private Vector3 GPSToWorldPosition(float lat, float lon)
     {
         // Difference in degrees between the current position and the origin
         float latDiff = lat - originLatitude;
@@ -79,10 +78,7 @@ public class CameraGPSController : MonoBehaviour
             zOffset = 0f;
         }
 
-        // Height: either from GPS or fixed
-        float yPos = useGPSAltitude ? alt : fixedHeight;
-
-        return new Vector3(xOffset, yPos, zOffset);
+        return new Vector3(xOffset, fixedHeight, zOffset);
     }
 
     public void RefreshOrigin()

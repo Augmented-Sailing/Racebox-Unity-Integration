@@ -138,11 +138,12 @@ public class ARWrapper : MonoBehaviour
 
     public void ResetOrigin()
     {
+        float modelY = modelInstance.position.y;
         if(gpsTracker != null)
             gpsTracker.RefreshOrigin();
         if(cameraGpsController != null)
             cameraGpsController.RefreshOrigin();
-        modelInstance.position = anchor.position;
+        modelInstance.position = new Vector3(anchor.position.x, modelY, anchor.position.z);
         Debug.Log("Origin reset in ARSampleManager");
     }
 
@@ -156,6 +157,18 @@ public class ARWrapper : MonoBehaviour
         modelInstance.localScale = Vector3.one * arg0;
     }
 
+    public void SetYPos(float yPos)
+    {
+        Vector3 position = modelInstance.position;
+        position.y = yPos;
+        modelInstance.position = position;
+    }
+
+    public float GetYPos()
+    {
+        return modelInstance.position.y;
+    }
+    
     public float GetRotation()
     {
         return modelInstance.localEulerAngles.y;
