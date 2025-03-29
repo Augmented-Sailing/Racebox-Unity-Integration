@@ -49,6 +49,7 @@ namespace RaceboxIntegration.Managers
 #if !UNITY_EDITOR
             BleManager.Instance.Initialize();
 #endif
+            RequestBluetoothPermissions();
         }
 
         private void Update()
@@ -66,17 +67,37 @@ namespace RaceboxIntegration.Managers
         {
             if (!IsScanning)
             {
-#if UNITY_ANDROID && !UNITY_EDITOR
-                // Check and request ACCESS_FINE_LOCATION permission
-                if (!Permission.HasUserAuthorizedPermission(Permission.FineLocation))
-                {
-                    Permission.RequestUserPermission(Permission.FineLocation);
-                    StartCoroutine(WaitForPermission());
-                    return;
-                }
-#endif
+                RequestBluetoothPermissions();
                 StartScan();
             }
+        }
+
+        void RequestBluetoothPermissions()
+        {
+#if UNITY_ANDROID && !UNITY_EDITOR
+            if (Application.platform == RuntimePlatform.Android)
+            {
+                string bluetoothScanPermission = "android.permission.BLUETOOTH_SCAN";
+                string bluetoothConnectPermission = "android.permission.BLUETOOTH_CONNECT";
+                string fineLocationPermission = "android.permission.ACCESS_FINE_LOCATION";
+
+                if (!Permission.HasUserAuthorizedPermission(bluetoothScanPermission))
+                {
+                    Permission.RequestUserPermission(bluetoothScanPermission);
+                    StartCoroutine(WaitForPermission(bluetoothScanPermission));
+                }
+                if (!Permission.HasUserAuthorizedPermission(bluetoothConnectPermission))
+                {
+                    Permission.RequestUserPermission(bluetoothConnectPermission);
+                    StartCoroutine(WaitForPermission(bluetoothConnectPermission));
+                }
+                if (!Permission.HasUserAuthorizedPermission(fineLocationPermission))
+                {
+                    Permission.RequestUserPermission(fineLocationPermission);
+                    StartCoroutine(WaitForPermission(fineLocationPermission));
+                }
+            }
+#endif
         }
 
         private void StartScan()
@@ -90,9 +111,9 @@ namespace RaceboxIntegration.Managers
 #endif
         }
 
-        private IEnumerator WaitForPermission()
+        private IEnumerator WaitForPermission(string permission)
         {
-            while (!Permission.HasUserAuthorizedPermission(Permission.FineLocation))
+            while (!Permission.HasUserAuthorizedPermission(permission))
             {
                 yield return null;
             }
