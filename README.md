@@ -10,7 +10,7 @@ https://github.com/user-attachments/assets/917ef5ba-952b-4ad9-91cb-63c09ab879e8
 - Parses Racebox specific data streams to read it's data
 
 ## Additional Features
-- Sample package setup for interacting with the Package
+- Sample setup for interacting with the Package
 - AR Demo Project hooked up with Racebox's Data
 
 ## Technical Requirements
