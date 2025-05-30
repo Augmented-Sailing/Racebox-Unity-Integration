@@ -81,8 +81,6 @@ The package includes a complete UI system:
 - There will need to be a system in place to automatically scan and pair to the device in the final solution.
   - Make sure to cancel the scan as soon as device is detected.
   - Make sure the device is recovered if connection is lost, with proper event handling in-game.
-- The ARCore override is not implemented yet and is the final step for the integration.
-  - Ideally you should be able to override the ARCore's Session Origin with Racebox's data and use a Geospatial Anchor for the track.
 
 ## References
 - [Racebox Protocol Documentation](https://www.racebox.pro/products/mini-micro-protocol-documentation?k=67c166d0bda80de96505efba)
