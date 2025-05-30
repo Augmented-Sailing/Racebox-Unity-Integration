@@ -87,4 +87,4 @@ The package includes a complete UI system:
 - [Geospatial Creator Documentation](https://developers.google.com/ar/geospatialcreator/unity/quickstart)
 
 ## Support
-For issues and feature requests, please use the project's issue tracker, or reach out on the Discord server.
+For issues and feature requests, please use the project's issue tracker, or reach out to sam@augmented.cool
